@@ -44,7 +44,7 @@ class SignupController extends GetxController {
 
     isLoading.value = false;
 
-    Get.snackbar("Success", "Account created");
+    Get.offAllNamed('/main');
   }
 
   void signupWithGoogle() {

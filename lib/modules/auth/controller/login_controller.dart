@@ -37,7 +37,7 @@ class LoginController extends GetxController {
 
     isLoading.value = false;
 
-    Get.snackbar("Success", "Login successful");
+    Get.offAllNamed('/main');
   }
 
   void loginWithGoogle() {
