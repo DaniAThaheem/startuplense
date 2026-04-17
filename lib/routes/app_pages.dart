@@ -1,4 +1,8 @@
 import 'package:get/get.dart';
+import '../modules/dashboard/binding/dashboard_binding.dart';
+import '../modules/dashboard/view/dashboard_view.dart';
+import '../modules/idea_submission/binding/idea_submission_binding.dart';
+import '../modules/idea_submission/view/idea_submission_view.dart';
 import '../modules/auth/view/login_view.dart';
 import '../modules/auth/view/signup_view.dart';
 import '../modules/auth/binding/login_binding.dart';
@@ -23,6 +27,16 @@ class AppPages {
       name: '/main',
       page: () => const MainView(),
       binding: MainBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.DASHBOARD,
+      page: () => const DashboardView(),
+      binding: DashboardBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.IDEA_SUBMISSION,
+      page: () => const IdeaSubmissionView(),
+      binding: IdeaSubmissionBinding(),
     ),
   ];
 }

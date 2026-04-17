@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:startup_lense/routes/app_routes.dart';
 
 class DashboardController extends GetxController {
   // 🔥 Reactive Idea List (dummy data for now)
@@ -21,8 +22,17 @@ class DashboardController extends GetxController {
   ].obs;
 
 
-  void onAddIdea() {
-    Get.snackbar("Action", "Navigate to Idea Submission");
+  void onAddIdea() async {
+    final result = await Get.toNamed(AppRoutes.IDEA_SUBMISSION);
+
+    if (result != null) {
+      ideas.insert(0, result);
+    }
+    Get.snackbar(
+      "Success",
+      "Idea analyzed successfully",
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   // 👉 SEE ALL BUTTON

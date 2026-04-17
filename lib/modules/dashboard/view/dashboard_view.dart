@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:startup_lense/routes/app_routes.dart';
 import '../controller/dashboard_controller.dart';
 
 class DashboardView extends GetView<DashboardController> {
@@ -231,7 +232,19 @@ class DashboardView extends GetView<DashboardController> {
 
           // CTA Button
           GestureDetector(
-            onTap: () {},
+            onTap: () async {
+              final result = await Get.toNamed(AppRoutes.IDEA_SUBMISSION);
+
+              if (result != null) {
+                controller.ideas.insert(0, result);
+
+                Get.snackbar(
+                  "Success",
+                  "Idea analyzed successfully",
+                  snackPosition: SnackPosition.BOTTOM,
+                );
+              }
+            },
             child: Container(
               height: 52,
               width: 200,
