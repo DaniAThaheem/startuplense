@@ -16,8 +16,8 @@ class IdeaSubmissionController extends GetxController {
   var businessType = "Digital".obs;
 
   var budget = 50000.0.obs;
+  var scale = 1.0.obs;
 
-  var isAnalyzing = false.obs;
 
 
   var cities = ["Lahore", "Karachi", "Islamabad", "Other"].obs;
@@ -65,20 +65,18 @@ class IdeaSubmissionController extends GetxController {
     budget.value = value;
   }
 
-  void analyzeIdea() async {
-    isAnalyzing.value = true;
+  void submitIdea() {
+    if (titleController.text.isEmpty) {
+      Get.snackbar("Error", "Please enter your idea");
+      return;
+    }
 
-    await Future.delayed(const Duration(seconds: 2));
-
-    isAnalyzing.value = false;
-
-    final newIdea = {
-      "title": titleController.text,
-      "score": 85,
-      "status": "Analyzed",
-    };
-
-    // RETURN DATA TO DASHBOARD
-    Get.back(result: newIdea);
+    Get.toNamed(
+      '/processing',
+      arguments: {
+        "title": titleController.text,
+      },
+    );
   }
+
 }

@@ -24,7 +24,8 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
           "Submit Startup Idea",
           style: TextStyle(
             color: Color(0xFF22D3EE),
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
+            fontSize: 18
           ),
         ),
 
@@ -472,58 +473,55 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
               const SizedBox(height: 12),
 
               Obx(() => GestureDetector(
-                onTap: controller.isAnalyzing.value
-                    ? null
-                    : controller.analyzeIdea,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: 55,
-                  width: double.infinity,
-
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF4F46E5),
-                        Color(0xFF06B6D4),
+                onTapDown: (_) => controller.scale.value = 0.97,
+                onTapUp: (_) {
+                  controller.scale.value = 1.0;
+                  controller.submitIdea();
+                },
+                onTapCancel: () => controller.scale.value = 1.0,
+                child: AnimatedScale(
+                  scale: controller.scale.value,
+                  duration: const Duration(milliseconds: 100),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    height: 55,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF4F46E5),
+                          Color(0xFF06B6D4),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF06B6D4).withOpacity(0.4),
+                          blurRadius: 15,
+                        )
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF06B6D4).withOpacity(0.4),
-                        blurRadius: 15,
-                      )
-                    ],
-                  ),
-
-                  child: Center(
-                    child: controller.isAnalyzing.value
-                        ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                        : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.analytics_outlined,
-                            color: Colors.white), // FIX ICON
-                        SizedBox(width: 8),
-                        Text(
-                          "Analyze Idea",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                    child: const Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.analytics_outlined, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text(
+                            "Analyze Idea",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              )),
+              ))
+
+
             ],
           ),
         ),

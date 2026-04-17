@@ -50,5 +50,17 @@ class DashboardController extends GetxController {
     // only logic trigger
   }
 
+  @override
+  void onReady() {
+    super.onReady();
+
+    final result = Get.arguments;
+
+    if (result != null) {
+      ideas.insert(0, result);
+    }
+  }
+
+
 
 }

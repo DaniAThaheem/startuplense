@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:startup_lense/modules/idea_processing/binding/processing_binding.dart';
+import 'package:startup_lense/modules/idea_processing/view/processing_view.dart';
 import '../modules/dashboard/binding/dashboard_binding.dart';
 import '../modules/dashboard/view/dashboard_view.dart';
 import '../modules/idea_submission/binding/idea_submission_binding.dart';
@@ -24,7 +26,7 @@ class AppPages {
       binding: SignupBinding(),
     ),
     GetPage(
-      name: '/main',
+      name: AppRoutes.MAIN,
       page: () => const MainView(),
       binding: MainBinding(),
     ),
@@ -38,5 +40,14 @@ class AppPages {
       page: () => const IdeaSubmissionView(),
       binding: IdeaSubmissionBinding(),
     ),
+    GetPage(
+      name: AppRoutes.PROCESSING,
+      page: () => const ProcessingView(),
+      binding: ProcessingBinding(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+
+
   ];
 }
