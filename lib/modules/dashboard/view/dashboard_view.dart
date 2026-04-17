@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:startup_lense/modules/main/controller/main_controller.dart';
 import 'package:startup_lense/routes/app_routes.dart';
 import '../controller/dashboard_controller.dart';
 
@@ -118,10 +119,16 @@ class DashboardView extends GetView<DashboardController> {
               ],
             ),
             const SizedBox(width: 12),
-            const CircleAvatar(
-              radius: 14,
-              backgroundColor: Color(0xFF111827),
-            ),
+            InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                Get.find<MainController>().changeIndex(3);
+              },
+              child: const CircleAvatar(
+                radius: 14,
+                backgroundColor: Color(0xFF111827),
+              ),
+            )
           ],
         ),
       ],
