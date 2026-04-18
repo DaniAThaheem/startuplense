@@ -36,6 +36,7 @@ class DashboardView extends GetView<DashboardController> {
         ),
         child: FloatingActionButton(
           onPressed: controller.onAddIdea,
+          heroTag: "dashboard_fab",
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: const Icon(Icons.add, size: 28),

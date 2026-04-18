@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:startup_lense/modules/idea_history/binding/idea_history_binding.dart';
+import 'package:startup_lense/modules/idea_history/view/idea_history_view.dart';
 import 'package:startup_lense/modules/idea_processing/binding/processing_binding.dart';
 import 'package:startup_lense/modules/idea_processing/view/processing_view.dart';
 import '../modules/dashboard/binding/dashboard_binding.dart';
@@ -38,6 +40,8 @@ class AppPages {
     GetPage(
       name: AppRoutes.IDEA_SUBMISSION,
       page: () => const IdeaSubmissionView(),
+      transition: Transition.leftToRightWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
       binding: IdeaSubmissionBinding(),
     ),
     GetPage(
@@ -47,7 +51,18 @@ class AppPages {
       transition: Transition.rightToLeftWithFade,
       transitionDuration: const Duration(milliseconds: 400),
     ),
+    GetPage(
+      name: AppRoutes.IDEA_HISTORY,
+      page: () => const IdeaHistoryView(),
+      transition: Transition.leftToRightWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
+      binding: IdeaHistoryBinding(),
+    ),
 
+    GetPage(
+      name: AppRoutes.IDEA_RESULT,
+      page: () => const ProcessingView(),
+    ),
 
   ];
 }

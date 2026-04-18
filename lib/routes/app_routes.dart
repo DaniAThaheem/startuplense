@@ -5,5 +5,7 @@ class AppRoutes {
   static const DASHBOARD = '/dashboard';
   static const IDEA_SUBMISSION = '/idea-submission';
   static const PROCESSING = '/processing';
+  static const IDEA_HISTORY = '/idea-history';
+  static const IDEA_RESULT = '/idea-result';
 
 }
