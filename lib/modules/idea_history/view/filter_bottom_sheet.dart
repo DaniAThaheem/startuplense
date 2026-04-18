@@ -170,6 +170,7 @@ class FilterBottomSheet extends GetView<IdeaHistoryController> {
         GestureDetector(
           onTap: () {
             controller.applyFilters();   // ✅ applies everything
+            Get.back();
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),

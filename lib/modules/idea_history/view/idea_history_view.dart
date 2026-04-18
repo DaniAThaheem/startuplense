@@ -96,7 +96,7 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
             const SizedBox(width: 16),
 
             IconButton(
-              icon: const Icon(Icons.tune_rounded),
+              icon: const Icon(Icons.tune_rounded, color: AppColors.secondaryText),
               onPressed:  _openFilter,
             )
           ],
