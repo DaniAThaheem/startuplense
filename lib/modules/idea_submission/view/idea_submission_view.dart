@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/idea_submission_controller.dart';
+import '../widgets/section_title.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/idea_input.dart';
+import '../widgets/idea_textarea.dart';
+import '../widgets/idea_chip.dart';
+import '../widgets/bottom_action_bar.dart';
+import '../widgets/idea_dropdown.dart';
+import '../widgets/business_type_selector.dart';
+import '../widgets/budget_slider.dart';
+
 
 class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
   const IdeaSubmissionView({super.key});
@@ -44,7 +54,10 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
         child: Stack(
           children: [
             _buildContent(),
-            _buildBottomBar(),
+            BottomActionBar(
+              scale: controller.scale,
+              onTap: controller.submitIdea,
+            ),
           ],
         ),
       ),
@@ -58,33 +71,48 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionTitle("IDEA FOUNDATION"),
-          _ideaFoundationCard(),
+          const SectionTitle("IDEA FOUNDATION"),
+          GlassCard(
+            child: Column(
+              children: [
+                IdeaInput(
+                  controller: controller.titleController,
+                  label: "Idea Title",
+                  hint: "e.g. Eco-friendly Delivery Network",
+                  icon: Icons.lightbulb_outline,
+                ),
+
+                const SizedBox(height: 16),
+
+                IdeaTextarea(
+                  controller: controller.problemController,
+                  hint: "What specific problem are you solving?",
+                ),
+
+                const SizedBox(height: 10),
+
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "✨ Better descriptions improve AI analysis.",
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
 
           const SizedBox(height: 20),
 
-          _sectionTitle("MARKET & AUDIENCE DETAILS"),
+          const SectionTitle("MARKET & AUDIENCE DETAILS"),
           _marketCard(),
 
           const SizedBox(height: 20),
 
-          _sectionTitle("BUSINESS MODEL DETAILS"),
+          const SectionTitle("BUSINESS MODEL DETAILS"),
           _businessCard(),
         ],
-      ),
-    );
-  }
-
-  // ================= SECTION TITLE =================
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white70,
-          letterSpacing: 1.2,
-        ),
       ),
     );
   }
@@ -108,54 +136,6 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
     );
   }
 
-  // ================= IDEA FOUNDATION =================
-  Widget _ideaFoundationCard() {
-    return _card(
-      child: Column(
-        children: [
-          _input(
-            controller.titleController,
-            "Idea Title",
-            "e.g. Eco-friendly Delivery Network",
-            icon: Icons.lightbulb_outline,
-          ),
-
-          const SizedBox(height: 16),
-
-          _textarea(),
-
-          const SizedBox(height: 10),
-
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              "✨ Better descriptions improve AI analysis.",
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _textarea() {
-    return TextField(
-      controller: controller.problemController,
-      maxLines: 4,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: "What specific problem are you solving?",
-        hintStyle: const TextStyle(color: Colors.white38),
-        filled: true,
-        fillColor: Colors.white10,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-
   // ================= MARKET CARD =================
   Widget _marketCard() {
     return _card(
@@ -171,9 +151,23 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _chip("Students"),
-              _chip("Professionals"),
-              _chip("Businesses"),
+              Obx(() => IdeaChip(
+                label: "Students",
+                selected: controller.selectedCustomers.contains("Students"),
+                onTap: () => controller.toggleCustomer("Students"),
+              )),
+
+              Obx(() => IdeaChip(
+                label: "Professionals",
+                selected: controller.selectedCustomers.contains("Professionals"),
+                onTap: () => controller.toggleCustomer("Professionals"),
+              )),
+              Obx(() => IdeaChip(
+                label: "Businesses",
+                selected: controller.selectedCustomers.contains("Businesses"),
+                onTap: () => controller.toggleCustomer("Businesses"),
+              )),
+
             ],
           ),
 
@@ -212,22 +206,12 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
 
           const SizedBox(height: 10),
 
-          Obx(() => DropdownButtonFormField<String>(
-            value: controller.selectedCity.value,
-            dropdownColor: const Color(0xFF111827),
-            style: const TextStyle(color: Colors.white),
+        Obx(() => IdeaDropdown(
+          value: controller.selectedCity.value,
+          items: controller.cities,
+          onChanged: controller.onCityChanged,
+        )),
 
-            items: controller.cities
-                .map((city) => DropdownMenuItem(
-              value: city,
-              child: Text(city),
-            ))
-                .toList(),
-
-            onChanged: (val) => controller.onCityChanged(val!),
-
-            decoration: _dropdownDecoration(),
-          )),
 
           const SizedBox(height: 10),
           Obx(() => controller.showCustomCityField.value
@@ -273,121 +257,24 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
 
           const SizedBox(height: 12),
 
-          Row(
-            children: ["Product", "Service", "Digital"]
-                .map((type) => Expanded(
-              child: Obx(() {
-                final isActive =
-                    controller.businessType.value == type;
+          Obx(() => BusinessTypeSelector(
+            selected: controller.businessType.value,
+            onChange: controller.changeBusinessType,
+          )),
 
-                return GestureDetector(
-                  onTap: () =>
-                      controller.changeBusinessType(type),
-                  child: Container(
-                    margin:
-                    const EdgeInsets.symmetric(horizontal: 4),
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? const Color(0xFF22D3EE)
-                          : Colors.white10,
-                      borderRadius:
-                      BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        type,
-                        style: TextStyle(
-                          color: isActive
-                              ? Colors.black
-                              : Colors.white70,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ))
-                .toList(),
-          ),
 
           const SizedBox(height: 20),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Estimated Budget",
-                style: TextStyle(color: Color(0xFF22D3EE)),
-              ),
-              Obx(() => Text(
-                "PKR ${controller.budget.value.toInt()}",
-                style: const TextStyle(color: Colors.white),
-              )),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          Obx(() => Slider(
+          Obx(() => BudgetSlider(
             value: controller.budget.value,
-            min: 10000,
-            max: 1000000,
             onChanged: controller.updateBudget,
           )),
-
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Low", style: TextStyle(color: Colors.white38)),
-              Text("High", style: TextStyle(color: Colors.white38)),
-            ],
-          ),
         ],
       ),
     );
   }
 
   // ================= COMPONENTS =================
-  Widget _chip(String label) {
-    return Obx(() {
-      final isSelected = controller.selectedCustomers.contains(label);
-
-      return ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => controller.toggleCustomer(label),
-        selectedColor: Colors.green,
-        backgroundColor: Colors.white10,
-      );
-    });
-  }
-
-  Widget _segment(String label) {
-    return Expanded(
-      child: Obx(() {
-        final active = controller.businessType.value == label;
-
-        return GestureDetector(
-          onTap: () => controller.changeBusinessType(label),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: active ? Colors.cyan : Colors.white10,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(label),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
   Widget _input(
       TextEditingController controller,
       String label,
@@ -424,108 +311,6 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
           ),
         ),
       ],
-    );
-  }
-
-  InputDecoration _dropdownDecoration() {
-    return InputDecoration(
-      filled: true,
-      fillColor: Colors.white10,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-    );
-  }
-
-  // ================= BOTTOM BAR =================
-  Widget _buildBottomBar() {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: SafeArea(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF111827), // FIX: no more transparent
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "AI will evaluate market, risk, and strategy",
-                style: TextStyle(
-                  color: Colors.white70, // FIX visibility
-                  fontSize: 13,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              Obx(() => GestureDetector(
-                onTapDown: (_) => controller.scale.value = 0.97,
-                onTapUp: (_) {
-                  controller.scale.value = 1.0;
-                  controller.submitIdea();
-                },
-                onTapCancel: () => controller.scale.value = 1.0,
-                child: AnimatedScale(
-                  scale: controller.scale.value,
-                  duration: const Duration(milliseconds: 100),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    height: 55,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF4F46E5),
-                          Color(0xFF06B6D4),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF06B6D4).withOpacity(0.4),
-                          blurRadius: 15,
-                        )
-                      ],
-                    ),
-                    child: const Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.analytics_outlined, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text(
-                            "Analyze Idea",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ))
-
-
-            ],
-          ),
-        ),
-      ),
     );
   }
 
