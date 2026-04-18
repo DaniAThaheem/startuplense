@@ -4,7 +4,6 @@ import 'package:startup_lense/modules/idea_history/controller/Idea_history_contr
 import 'package:startup_lense/modules/idea_history/view/filter_bottom_sheet.dart';
 import 'package:startup_lense/routes/app_routes.dart';
 import '../../../core/constants/app_colors.dart';
-import 'dart:ui';
 
 
 class IdeaHistoryView extends GetView<IdeaHistoryController> {
@@ -98,7 +97,7 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
 
             IconButton(
               icon: const Icon(Icons.tune_rounded),
-              onPressed: _openFilter
+              onPressed:  _openFilter,
             )
           ],
         );
@@ -173,6 +172,7 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
   // 🔥 LIST
   Widget _ideasList() {
     return Obx(() {
+      // ✅ EMPTY STATE
       if (controller.filteredIdeas.isEmpty) {
         return _emptyState();
       }
@@ -180,9 +180,34 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
       return ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: controller.filteredIdeas.length,
-        itemBuilder: (context, index) {
-          final idea = controller.filteredIdeas[index];
-          return _ideaCard(idea); // 🔥 IMPORTANT FIX
+        itemBuilder: (_, i) {
+          final idea = controller.filteredIdeas[i];
+
+          return Dismissible(
+            key: Key(idea.title),
+
+            direction: DismissDirection.horizontal,
+
+            background: _swipeRightBg(),
+            secondaryBackground: _swipeLeftBg(),
+
+            confirmDismiss: (direction) async {
+              if (direction == DismissDirection.endToStart) {
+                return await _confirmDelete();
+              }
+              return false;
+            },
+
+            onDismissed: (direction) {
+              if (direction == DismissDirection.startToEnd) {
+                controller.compareIdea(idea);
+              } else {
+                controller.deleteIdea(idea);
+              }
+            },
+
+            child: _ideaCard(idea),
+          );
         },
       );
     });
@@ -300,7 +325,7 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
                       // ✅ NEW — 2 LINE DESCRIPTION
                       const SizedBox(height: 6),
                       Text(
-                        "This idea explores scalable opportunities with strong market potential and differentiation.",
+                        idea.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -400,28 +425,10 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
   }
   // 🔥 FILTER SHEET
   void _openFilter() {
-    showModalBottomSheet(
-      context: Get.context!,
+    Get.bottomSheet(
+      const FilterBottomSheet(),
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.25),
-      builder: (context) {
-        return Stack(
-          children: [
-            // ✅ BACKGROUND BLUR (FULL SCREEN)
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(color: Colors.transparent),
-            ),
-
-            // ✅ FIXED: ALWAYS STICK TO BOTTOM
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const FilterBottomSheet(),
-            ),
-          ],
-        );
-      },
+      backgroundColor: const Color(0xFF0B0F19),
     );
   }
 }

@@ -29,10 +29,12 @@ class IdeaModel {
 }
 
 class IdeaHistoryController extends GetxController {
+  var allIdeas = <IdeaModel>[].obs;
+  var filteredIdeas = <IdeaModel>[].obs;
   var ideas = <IdeaModel>[].obs;
+
   var isSearching = false.obs;
   var searchQuery = ''.obs;
-  var filteredIdeas = <IdeaModel>[].obs;
 
   final selectedSort = SortType.highest.obs;
   final selectedStatus = <IdeaStatus>{}.obs;
@@ -50,7 +52,7 @@ class IdeaHistoryController extends GetxController {
   }
 
   void loadDummyData() {
-    ideas.assignAll([
+    final data = [
       IdeaModel(
         title: "Eco-Friendly Logistics",
         description: "AI-optimized routing for electric fleets to reduce carbon emissions.",
@@ -87,7 +89,10 @@ class IdeaHistoryController extends GetxController {
         date: "OCT 18, 2023",
         tag: "Low Feasibility",
       ),
-    ]);
+    ];
+    allIdeas.assignAll(data);  // store original
+    ideas.assignAll(data);     // show on UI
+
   }
   void searchIdeas(String query) {
     searchQuery.value = query;
@@ -112,7 +117,8 @@ class IdeaHistoryController extends GetxController {
       ideas.isEmpty ? 0 : ideas.map((e) => e.score).reduce((a, b) => a > b ? a : b);
 
   void deleteIdea(IdeaModel idea) {
-    ideas.remove(idea);
+    allIdeas.remove(idea);
+    applyFilters(); // 🔥 reapply filters
   }
 
   void compareIdea(IdeaModel idea) {
@@ -146,63 +152,20 @@ class IdeaHistoryController extends GetxController {
 
   // Reset Filters
   void resetFilters() {
-    selectedSort.value = SortType.highest;
-    selectedStatus.clear();
-    selectedScoreRange.value = ScoreRange.high;
-
-    // ✅ IMPORTANT
-    filteredIdeas.assignAll(ideas);
+    filteredIdeas.assignAll(allIdeas);
   }
 
   // Apply Filters (connect later with API / list)
-  void applyFilters() {
-    List<IdeaModel> tempList = List.from(ideas);
+  void applyFilters({
+    String? status,
+  }) {
+    var temp = allIdeas.toList();
 
-    // ✅ FILTER: STATUS
-    if (selectedStatus.isNotEmpty) {
-      tempList = tempList.where((idea) {
-        if (selectedStatus.contains(IdeaStatus.analyzed) &&
-            idea.status.toLowerCase() == "analyzed") {
-          return true;
-        }
-        if (selectedStatus.contains(IdeaStatus.processing) &&
-            idea.status.toLowerCase() == "processing") {
-          return true;
-        }
-        return false;
-      }).toList();
+    if (status != null) {
+      temp = temp.where((e) => e.status == status).toList();
     }
 
-    // ✅ FILTER: SCORE RANGE
-    tempList = tempList.where((idea) {
-      switch (selectedScoreRange.value) {
-        case ScoreRange.low:
-          return idea.score <= 40;
-        case ScoreRange.mid:
-          return idea.score > 40 && idea.score <= 70;
-        case ScoreRange.high:
-          return idea.score > 70;
-      }
-    }).toList();
-
-    // ✅ SORT
-    switch (selectedSort.value) {
-      case SortType.highest:
-        tempList.sort((a, b) => b.score.compareTo(a.score));
-        break;
-      case SortType.lowest:
-        tempList.sort((a, b) => a.score.compareTo(b.score));
-        break;
-      case SortType.recent:
-      // You can later replace with real DateTime parsing
-        tempList = tempList.reversed.toList();
-        break;
-    }
-
-    // ✅ APPLY RESULT
-    filteredIdeas.assignAll(tempList);
-
-    Get.back();
+    filteredIdeas.assignAll(temp);
   }
 
   @override

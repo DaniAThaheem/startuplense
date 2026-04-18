@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:startup_lense/modules/idea_history/binding/idea_history_binding.dart';
 import 'package:startup_lense/modules/idea_history/view/idea_history_view.dart';
+import 'package:startup_lense/modules/idea_improve/binding/improve_idea_binding.dart';
+import 'package:startup_lense/modules/idea_improve/view/improve_idea_view.dart';
 import 'package:startup_lense/modules/idea_processing/binding/processing_binding.dart';
 import 'package:startup_lense/modules/idea_processing/view/processing_view.dart';
 import '../modules/dashboard/binding/dashboard_binding.dart';
@@ -63,6 +65,13 @@ class AppPages {
       name: AppRoutes.IDEA_RESULT,
       page: () => const ProcessingView(),
     ),
+
+    GetPage(
+      name: AppRoutes.IMPROVE_IDEA,
+      page: () => const IdeaImproveView(),
+      binding: IdeaImproveBinding(),
+    ),
+
 
   ];
 }

@@ -453,7 +453,14 @@ class DashboardView extends GetView<DashboardController> {
               ListTile(
                 title: const Text("Re-run Analysis",
                     style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context),
+                onTap: () => {
+                  Navigator.pop(context),
+                  Get.toNamed(
+                    '/improve-idea',
+                    arguments: idea,
+                  ),
+
+                }
               ),
               ListTile(
                 title: const Text("Compare",
