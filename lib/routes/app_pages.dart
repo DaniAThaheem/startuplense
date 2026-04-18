@@ -5,6 +5,8 @@ import 'package:startup_lense/modules/idea_improve/binding/improve_idea_binding.
 import 'package:startup_lense/modules/idea_improve/view/improve_idea_view.dart';
 import 'package:startup_lense/modules/idea_processing/binding/processing_binding.dart';
 import 'package:startup_lense/modules/idea_processing/view/processing_view.dart';
+import 'package:startup_lense/modules/idea_result/controller/idea_result-controller.dart';
+import 'package:startup_lense/modules/idea_result/view/idea_result_view.dart';
 import '../modules/dashboard/binding/dashboard_binding.dart';
 import '../modules/dashboard/view/dashboard_view.dart';
 import '../modules/idea_submission/binding/idea_submission_binding.dart';
@@ -70,6 +72,14 @@ class AppPages {
       name: AppRoutes.IMPROVE_IDEA,
       page: () => const IdeaImproveView(),
       binding: IdeaImproveBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.RESULT,
+      page: () => ResultView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<ResultController>(() => ResultController());
+      }),
     ),
 
 

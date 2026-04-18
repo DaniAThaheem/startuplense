@@ -8,6 +8,7 @@ class AppRoutes {
   static const IDEA_HISTORY = '/idea-history';
   static const IDEA_RESULT = '/idea-result';
   static const IMPROVE_IDEA = '/improve-idea';
+  static const RESULT = '/result';
 
 
 }

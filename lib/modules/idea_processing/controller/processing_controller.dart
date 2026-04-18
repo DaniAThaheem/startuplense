@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
+import 'package:startup_lense/routes/app_routes.dart';
 
 class ProcessingController extends GetxController {
   // Progress 0 → 100
@@ -83,9 +84,23 @@ class ProcessingController extends GetxController {
       "status": "Analyzed",
     };
 
-    Get.offNamed('/main', arguments: result);
+    goToResult();
   }
 
+
+  void goToResult() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    Get.offNamed(
+      AppRoutes.RESULT,
+      arguments: {
+        "title": "AI Food Delivery for Students",
+        "score": 78,
+        "verdict": "Viable with moderate competition",
+        "market": "High demand detected",
+      },
+    );
+  }
 
 
 
