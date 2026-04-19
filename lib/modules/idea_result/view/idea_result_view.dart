@@ -94,13 +94,31 @@ class ResultView extends GetView<ResultController> {
     return AppBar(
       backgroundColor: const Color(0xFF0B0F19),
       elevation: 0,
-      title: const Text("Evaluation Report"),
+
+      // 🔥 FIX BACK ICON COLOR
+      iconTheme: const IconThemeData(color: Colors.white),
+
       centerTitle: true,
+
+      // 🔥 GRADIENT TITLE
+      title: ShaderMask(
+        shaderCallback: (bounds) => const LinearGradient(
+          colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
+        ).createShader(bounds),
+        child: const Text(
+          "Evaluation Report",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // required for shader
+          ),
+        ),
+      ),
+
       actions: [
-        TextButton(
-          onPressed: () {},
-          child: const Text("Export"),
-        )
+        IconButton(
+          icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.white70),
+          onPressed: controller.exportPremiumReport
+        ),
       ],
     );
   }
@@ -1088,55 +1106,6 @@ class ResultView extends GetView<ResultController> {
   }
 
 
-  Widget _actionButtons() {
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
-            ),
-          ),
-          child: const Center(
-            child: Text(
-              "Improve Idea & Re-run",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        Row(
-          children: [
-            Expanded(child: _secondaryBtn("Save")),
-            const SizedBox(width: 10),
-            Expanded(child: _secondaryBtn("Compare")),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _tags(List<String> tags) {
-    return Wrap(
-      spacing: 8,
-      children: tags.map((t) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.cyan),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(t,
-              style: const TextStyle(color: Colors.cyan, fontSize: 12)),
-        );
-      }).toList(),
-    );
-  }
 
   Widget _chip(String title, String value) {
     return Container(
@@ -1151,16 +1120,87 @@ class ResultView extends GetView<ResultController> {
   }
 
 
-  Widget _secondaryBtn(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white24),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Center(
-        child: Text(text,
-            style: const TextStyle(color: Colors.white70)),
+  Widget _actionButtons() {
+    return Row(
+      children: [
+
+        // 🔥 PRIMARY BUTTON (EXPANDED)
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              Get.toNamed('/improve-idea'); // ✅ adjust route if needed
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
+                ),
+              ),
+              child: const Center(
+                child: Text(
+                  "Improve Idea",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 10),
+
+        // 🔥 SAVE BUTTON (TOGGLE)
+        Obx(() => _iconButton(
+          icon: controller.isSaved.value
+              ? Icons.bookmark
+              : Icons.bookmark_border,
+          onTap: controller.toggleSave,
+          active: controller.isSaved.value,
+        )),
+
+        const SizedBox(width: 10),
+
+        // 🔥 COMPARE BUTTON
+        _iconButton(
+          icon: Icons.compare_arrows,
+          onTap: () {
+            controller.compareIdea(); // make sure method exists
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _iconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool active = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: active
+              ? const Color(0x2206B6D4)
+              : const Color(0xFF111827),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: active
+                ? const Color(0xFF06B6D4)
+                : Colors.white24,
+          ),
+        ),
+        child: Icon(
+          icon,
+          color: active
+              ? const Color(0xFF06B6D4)
+              : Colors.white70,
+        ),
       ),
     );
   }
