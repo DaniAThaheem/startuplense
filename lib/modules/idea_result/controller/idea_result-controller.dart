@@ -3,9 +3,10 @@ import 'package:get/get.dart';
 class ResultController extends GetxController {
   final idea = Get.arguments;
 
+  var isLoading = true.obs;
   var title =  "".obs;
 
-  var score = 78.obs;
+  final RxInt score = 22.obs;
   var visibleCards = 0.obs;
 
   var confidence = "High".obs;
@@ -19,6 +20,15 @@ class ResultController extends GetxController {
   var financialRisk = "Medium".obs;
   var technicalRisk = "Low".obs;
 
+  var problemStrength = "Strong".obs;
+  var valuePropStrength = "Medium".obs;
+  var audienceClarity = "Clear".obs;
+
+  var structureTags = <String>[].obs;
+
+
+  var riskTags = <String>[].obs;
+
   var verdict = "Viable".obs;
   var verdictLine = "".obs;
 
@@ -26,15 +36,24 @@ class ResultController extends GetxController {
   var marketTags = <String>[].obs;
 
   var riskInsight = "".obs;
-  var riskTags = <String>[].obs;
+
+  var marketSignals = <String>[].obs;
 
   var problem = "".obs;
   var valueProp = "".obs;
 
   var revenue = "".obs;
-  var structureTags = <String>[].obs;
 
-  var businessModel = "".obs;
+  var businessModel = "Subscription + Commission".obs;
+
+  var marketingChannels = <String>[
+    "University ambassadors",
+    "Social campaigns",
+  ].obs;
+
+  var phaseOne = "Launch in 2 universities with pilot users".obs;
+  var phaseTwo = "Expand via ambassador network".obs;
+
   var launchPhase = "".obs;
 
   var marketing = "".obs;
@@ -48,6 +67,10 @@ class ResultController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+
+    Future.delayed(const Duration(seconds: 2), () {
+      isLoading.value = false;
+    });
 
     final args = Get.arguments;
 
@@ -81,8 +104,25 @@ class ResultController extends GetxController {
       "Focus on student niche",
     ]);
 
+    marketSignals.assignAll([
+      "Rising Trend",
+      "Niche Gap",
+    ]);
+
+    riskTags.assignAll([
+      "Low entry barrier",
+      "Burn rate concern",
+    ]);
+
+    structureTags.assignAll([
+      "Clear problem definition",
+      "Target audience identified",
+    ]);
+
     _startSequence();
   }
+
+
 
 
   void _startSequence() async {
