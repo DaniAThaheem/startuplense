@@ -42,10 +42,7 @@ class DashboardController extends GetxController {
 
   // 👉 OPEN IDEA
   void openIdea(Map idea) {
-    Get.toNamed(
-      AppRoutes.ANALYSIS,
-      arguments: idea, // 🔥 pass data
-    );
+    Get.toNamed('/analysis');
   }
 
   // 👉 LONG PRESS OPTIONS

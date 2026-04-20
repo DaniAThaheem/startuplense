@@ -86,5 +86,12 @@ class AppPages {
     ),
 
 
+
+    GetPage(
+      name:AppRoutes.ANALYSIS,
+      page: () => const DetailedAnalysisView(),
+      binding: DetailedAnalysisBinding(),
+    ),
+
   ];
 }
