@@ -9,6 +9,7 @@ class AppRoutes {
   static const IDEA_RESULT = '/idea-result';
   static const IMPROVE_IDEA = '/improve-idea';
   static const RESULT = '/result';
+  static const ANALYSIS = '/analysis';
 
 
 }

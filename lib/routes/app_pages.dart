@@ -1,4 +1,7 @@
 import 'package:get/get.dart';
+import 'package:startup_lense/modules/detailed_analysis/binding/detailed_analysis_binding.dart';
+import 'package:startup_lense/modules/detailed_analysis/controller/detailed_analysis_controller.dart';
+import 'package:startup_lense/modules/detailed_analysis/view/detailed_analysis_view.dart';
 import 'package:startup_lense/modules/idea_history/binding/idea_history_binding.dart';
 import 'package:startup_lense/modules/idea_history/view/idea_history_view.dart';
 import 'package:startup_lense/modules/idea_improve/binding/improve_idea_binding.dart';

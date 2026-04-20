@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "799677591680",
+    "project_id": "startup-lense",
+    "storage_bucket": "startup-lense.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799677591680:android:919f1943248553343e7665",
+        "android_client_info": {
+          "package_name": "com.example.startup_lense"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_8XcK0Y9vYAzsxf5v6_XlQRQfPUukwb0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
