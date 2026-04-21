@@ -61,7 +61,18 @@ class SignupController extends GetxController {
     }
   }
 
-  void signupWithGoogle() {
-    Get.snackbar("Info", "Google signup clicked");
+  Future<void> signupWithGoogle() async {
+    try {
+      isLoading.value = true;
+
+      await _authRepository.signInWithGoogle();
+
+      Get.offAllNamed('/main');
+
+    } catch (e) {
+      Get.snackbar("Login Failed", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

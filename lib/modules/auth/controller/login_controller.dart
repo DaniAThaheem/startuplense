@@ -52,7 +52,18 @@ class LoginController extends GetxController {
     }
   }
 
-  void loginWithGoogle() {
-    Get.snackbar("Info", "Google login clicked");
+  Future<void> loginWithGoogle() async {
+    try {
+      isLoading.value = true;
+
+      await _authRepository.signInWithGoogle();
+
+      Get.offAllNamed('/main');
+
+    } catch (e) {
+      Get.snackbar("Login Failed", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

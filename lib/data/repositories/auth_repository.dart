@@ -7,6 +7,56 @@ class AuthRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 
+  Future<void> signInWithGoogle() async {
+    try {
+      final credential = await _authService.signInWithGoogle();
+      final user = credential.user;
+
+      if (user == null) {
+        throw Exception("Google login failed");
+      }
+
+      final userDoc =
+      await _firestore.collection('users').doc(user.uid).get();
+
+      // 🔥 KEY LOGIC: check if user exists
+      if (!userDoc.exists) {
+        // New user → create Firestore document
+        await _firestore.collection('users').doc(user.uid).set({
+          "profile": {
+            "name": user.displayName ?? "",
+            "email": user.email ?? "",
+            "photoURL": user.photoURL ?? "",
+            "university": "",
+          },
+          "settings": {
+            "notificationEnabled": false,
+          },
+          "stats": {
+            "averageScore": 0,
+            "bestScore": 0,
+            "ideasAnalyzed": 0,
+            "totalIdeas": 0,
+          },
+          "timestamps": {
+            "createdAt": FieldValue.serverTimestamp(),
+            "lastLogin": FieldValue.serverTimestamp(),
+          }
+        });
+      } else {
+        // Existing user → just update last login
+        await _firestore.collection('users').doc(user.uid).update({
+          "timestamps.lastLogin": FieldValue.serverTimestamp(),
+        });
+      }
+
+    } catch (e) {
+      print("Google Sign-In Error: $e");
+      rethrow;
+    }
+  }
+
+
   Future<void> login({
     required String email,
     required String password,
