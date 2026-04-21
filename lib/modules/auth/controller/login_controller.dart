@@ -1,6 +1,10 @@
 import 'package:get/get.dart';
+import '../../../data/repositories/auth_repository.dart';
 
 class LoginController extends GetxController {
+
+  final AuthRepository _authRepository = AuthRepository();
+
   final email = ''.obs;
   final password = ''.obs;
 
@@ -31,13 +35,21 @@ class LoginController extends GetxController {
       return;
     }
 
-    isLoading.value = true;
+    try {
+      isLoading.value = true;
 
-    await Future.delayed(const Duration(seconds: 2));
+      await _authRepository.login(
+        email: email.value,
+        password: password.value,
+      );
 
-    isLoading.value = false;
+      Get.offAllNamed('/main');
 
-    Get.offAllNamed('/main');
+    } catch (e) {
+      Get.snackbar("Login Failed", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void loginWithGoogle() {

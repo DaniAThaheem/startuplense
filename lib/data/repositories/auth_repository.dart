@@ -6,6 +6,36 @@ class AuthRepository {
   final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+
+  Future<void> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      // Step 1: Firebase Auth login
+      UserCredential credential = await _authService.loginWithEmail(
+        email: email,
+        password: password,
+      );
+
+      final user = credential.user;
+
+      if (user == null) {
+        throw Exception("Login failed");
+      }
+
+      // Step 2: Update lastLogin (important for tracking)
+      await _firestore.collection('users').doc(user.uid).update({
+        "timestamps.lastLogin": FieldValue.serverTimestamp(),
+      });
+
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? "Login failed");
+    } catch (e) {
+      throw Exception("Something went wrong");
+    }
+  }
+
   Future<void> signup({
     required String name,
     required String email,
