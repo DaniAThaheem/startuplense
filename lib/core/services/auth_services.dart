@@ -24,6 +24,12 @@ class AuthService {
   }
 
 
+
+  Future<void> logout() async {
+    await GoogleSignIn.instance.signOut(); // important for Google users
+    await _auth.signOut();
+  }
+
   User? getCurrentUser() {
     return _auth.currentUser;
   }

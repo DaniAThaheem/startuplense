@@ -57,6 +57,15 @@ class AuthRepository {
   }
 
 
+  Future<void> logout() async {
+    try {
+      await _authService.logout();
+    } catch (e) {
+      throw "Logout failed";
+    }
+  }
+
+
   Future<void> login({
     required String email,
     required String password,
