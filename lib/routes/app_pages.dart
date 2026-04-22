@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:startup_lense/modules/auth/binding/auth_binding.dart';
+import 'package:startup_lense/modules/auth/view/splash_view.dart';
 import 'package:startup_lense/modules/detailed_analysis/binding/detailed_analysis_binding.dart';
 import 'package:startup_lense/modules/detailed_analysis/controller/detailed_analysis_controller.dart';
 import 'package:startup_lense/modules/detailed_analysis/view/detailed_analysis_view.dart';
@@ -91,6 +93,12 @@ class AppPages {
       name:AppRoutes.ANALYSIS,
       page: () => const DetailedAnalysisView(),
       binding: DetailedAnalysisBinding(),
+    ),
+
+    GetPage(
+      name: '/splash',
+      page: () => const SplashView(),
+      binding: AuthBinding(),
     ),
 
   ];

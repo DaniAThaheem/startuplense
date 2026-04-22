@@ -5,22 +5,28 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<UserCredential> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser =
+    // Step 1 — triggers the system account picker sheet
+    final GoogleSignInAccount googleUser =
     await GoogleSignIn.instance.authenticate();
 
-    if (googleUser == null) {
-      throw Exception("Google sign-in cancelled");
-    }
+    // Step 2 — get accessToken via authorizeScopes (mandatory in v7)
+    final clientAuth = await googleUser.authorizationClient
+        .authorizeScopes(['email', 'profile']);
 
-    final googleAuth = await googleUser.authentication;
-
+    // Step 3 — build Firebase credential with BOTH tokens
     final credential = GoogleAuthProvider.credential(
-      idToken: googleAuth.idToken,
+      idToken: googleUser.authentication.idToken,
+      accessToken: clientAuth.accessToken,
     );
 
+    // Step 4 — sign into Firebase
     return await _auth.signInWithCredential(credential);
   }
 
+
+  User? getCurrentUser() {
+    return _auth.currentUser;
+  }
 
   //SignUp using email password
 

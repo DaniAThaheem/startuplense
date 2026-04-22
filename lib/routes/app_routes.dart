@@ -10,6 +10,7 @@ class AppRoutes {
   static const IMPROVE_IDEA = '/improve-idea';
   static const RESULT = '/result';
   static const ANALYSIS = '/analysis';
+  static const INITIALROUTE = '/splash';
 
 
 }
