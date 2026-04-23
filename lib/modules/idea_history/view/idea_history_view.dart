@@ -291,9 +291,16 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
 
   // 🔥 IDEA CARD
   Widget _ideaCard(IdeaModel idea) {
+    final args = Get.arguments ?? {};
+    final isSelecting = args["isSelecting"] ?? false;
+
     return GestureDetector(
       onTap: () {
-        Get.toNamed('/idea-result', arguments: idea);
+        if (isSelecting) {
+          Get.back(result: idea); // ✅ return to compare
+        } else {
+          Get.toNamed('/idea-result', arguments: idea); // normal flow
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),

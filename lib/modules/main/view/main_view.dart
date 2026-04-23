@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:startup_lense/modules/compare/view/compare_view.dart';
 import 'package:startup_lense/modules/idea_history/controller/Idea_history_controller.dart';
 import 'package:startup_lense/modules/idea_history/view/idea_history_view.dart';
 import 'package:startup_lense/modules/profile/controller/profile_controller.dart';
@@ -7,6 +8,7 @@ import 'package:startup_lense/modules/profile/view/profile_view.dart';
 import '../controller/main_controller.dart';
 import '../../dashboard/view/dashboard_view.dart';
 import '../../dashboard/controller/dashboard_controller.dart';
+import '../../compare/controller/compare_controller.dart';
 
 class MainView extends GetView<MainController> {
   const MainView({super.key});
@@ -15,6 +17,7 @@ class MainView extends GetView<MainController> {
   Widget build(BuildContext context) {
     Get.put(DashboardController());
     Get.put(IdeaHistoryController());
+    Get.put(CompareController());
     Get.put(ProfileController());
 
     return Obx(() {
@@ -27,7 +30,7 @@ class MainView extends GetView<MainController> {
           children: const [
             DashboardView(),
             IdeaHistoryView(),
-            Center(child: Text("Compare", style: TextStyle(color: Colors.white))),
+            CompareView(),
             ProfileView()
           ],
         ),
