@@ -11,7 +11,6 @@ import '../widgets/idea_dropdown.dart';
 import '../widgets/business_type_selector.dart';
 import '../widgets/budget_slider.dart';
 
-
 class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
   const IdeaSubmissionView({super.key});
 
@@ -35,7 +34,7 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
           style: TextStyle(
             color: Color(0xFF22D3EE),
             fontWeight: FontWeight.w500,
-            fontSize: 18
+            fontSize: 18,
           ),
         ),
 
@@ -102,7 +101,6 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
             ),
           ),
 
-
           const SizedBox(height: 20),
 
           const SectionTitle("MARKET & AUDIENCE DETAILS"),
@@ -142,8 +140,10 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Target Customers",
-              style: TextStyle(color: Color(0xFF22D3EE))),
+          const Text(
+            "Target Customers",
+            style: TextStyle(color: Color(0xFF22D3EE)),
+          ),
 
           const SizedBox(height: 10),
 
@@ -153,21 +153,24 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
             children: [
               Obx(() => IdeaChip(
                 label: "Students",
-                selected: controller.selectedCustomers.contains("Students"),
+                selected:
+                controller.selectedCustomers.contains("Students"),
                 onTap: () => controller.toggleCustomer("Students"),
               )),
 
               Obx(() => IdeaChip(
                 label: "Professionals",
-                selected: controller.selectedCustomers.contains("Professionals"),
+                selected: controller.selectedCustomers
+                    .contains("Professionals"),
                 onTap: () => controller.toggleCustomer("Professionals"),
               )),
+
               Obx(() => IdeaChip(
                 label: "Businesses",
-                selected: controller.selectedCustomers.contains("Businesses"),
+                selected:
+                controller.selectedCustomers.contains("Businesses"),
                 onTap: () => controller.toggleCustomer("Businesses"),
               )),
-
             ],
           ),
 
@@ -202,23 +205,26 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
 
           const SizedBox(height: 20),
 
-          const Text("Target City", style: TextStyle(color: Colors.cyanAccent)),
+          const Text(
+            "Target City",
+            style: TextStyle(color: Colors.cyanAccent),
+          ),
 
           const SizedBox(height: 10),
 
-        Obx(() => IdeaDropdown(
-          value: controller.selectedCity.value,
-          items: controller.cities,
-          onChanged: controller.onCityChanged,
-        )),
+          // ✅ Dropdown always reflects selectedCity
+          Obx(() => IdeaDropdown(
+            value: controller.selectedCity.value,
+            items: controller.cities,
+            onChanged: controller.onCityChanged,
+          )),
 
-
-          const SizedBox(height: 10),
+          // ✅ Custom city field shown only when "Other" is selected
           Obx(() => controller.showCustomCityField.value
               ? Padding(
             padding: const EdgeInsets.only(top: 12),
             child: TextField(
-              onSubmitted: controller.addCustomCity,
+              controller: controller.customCityController, // ✅ Bound to controller
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Enter your city",
@@ -233,12 +239,13 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
             ),
           )
               : const SizedBox()),
+
           const SizedBox(height: 8),
 
           const Text(
             "Helps AI understand market context.",
             style: TextStyle(color: Colors.white54, fontSize: 12),
-          )
+          ),
         ],
       ),
     );
@@ -261,7 +268,6 @@ class IdeaSubmissionView extends GetView<IdeaSubmissionController> {
             selected: controller.businessType.value,
             onChange: controller.changeBusinessType,
           )),
-
 
           const SizedBox(height: 20),
 

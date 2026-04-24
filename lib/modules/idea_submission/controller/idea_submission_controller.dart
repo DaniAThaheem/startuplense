@@ -9,7 +9,7 @@ class IdeaSubmissionController extends GetxController {
   final titleController = TextEditingController();
   final problemController = TextEditingController();
   final customCustomerController = TextEditingController();
-  final customCityController = TextEditingController(); // ✅ NEW
+  final customCityController = TextEditingController();
 
   // ==========================
   // STATE
@@ -31,29 +31,14 @@ class IdeaSubmissionController extends GetxController {
   // CITY LOGIC (FIXED)
   // ==========================
   void onCityChanged(String value) {
-    String finalCity;
+    selectedCity.value = value; // ✅ Actually update the selected city
 
-    if (selectedCity.value == "Other") {
-      if (customCityController.text.trim().isEmpty) {
-        Get.snackbar("Error", "Please enter your city");
-        return;
-      }
-      finalCity = customCityController.text.trim();
+    if (value == "Other") {
+      showCustomCityField.value = true; // ✅ Show custom field
     } else {
-      finalCity = selectedCity.value;
+      showCustomCityField.value = false; // ✅ Hide custom field
+      customCityController.clear();     // ✅ Clear any previous custom input
     }
-  }
-
-  void addCustomCity(String city) {
-    if (city.trim().isEmpty) return;
-
-    if (!cities.contains(city)) {
-      cities.insert(0, city);
-    }
-
-    selectedCity.value = city;
-    showCustomCityField.value = false;
-    customCityController.clear();
   }
 
   // ==========================
@@ -84,7 +69,7 @@ class IdeaSubmissionController extends GetxController {
   }
 
   // ==========================
-  // SUBMIT IDEA (FINAL FIXED LOGIC)
+  // SUBMIT IDEA
   // ==========================
   final IdeaRepository _ideaRepository = IdeaRepository();
 
@@ -104,10 +89,8 @@ class IdeaSubmissionController extends GetxController {
     // ==========================
     final customers = [...selectedCustomers];
 
-    if (showCustomField.value &&
-        customCustomerController.text.isNotEmpty) {
+    if (showCustomField.value && customCustomerController.text.isNotEmpty) {
       final custom = customCustomerController.text.trim();
-
       if (!customers.contains(custom)) {
         customers.add(custom);
       }
@@ -116,11 +99,16 @@ class IdeaSubmissionController extends GetxController {
     // ==========================
     // FINAL CITY LOGIC (FIXED)
     // ==========================
-    String finalCity = selectedCity.value;
+    String finalCity;
 
-    if (showCustomCityField.value &&
-        customCityController.text.isNotEmpty) {
-      finalCity = customCityController.text.trim();
+    if (selectedCity.value == "Other") {
+      if (customCityController.text.trim().isEmpty) {
+        Get.snackbar("Error", "Please enter your city");
+        return;
+      }
+      finalCity = customCityController.text.trim(); // ✅ Use custom city
+    } else {
+      finalCity = selectedCity.value; // ✅ Use dropdown city
     }
 
     try {
@@ -128,7 +116,7 @@ class IdeaSubmissionController extends GetxController {
         title: titleController.text.trim(),
         problem: problemController.text.trim(),
         customers: customers,
-        city: finalCity, // ✅ FIXED
+        city: finalCity,
         businessType: businessType.value,
         budget: budget.value,
         scale: scale.value,
@@ -141,7 +129,6 @@ class IdeaSubmissionController extends GetxController {
           "title": titleController.text,
         },
       );
-
     } catch (e) {
       Get.snackbar("Error", e.toString());
     }
