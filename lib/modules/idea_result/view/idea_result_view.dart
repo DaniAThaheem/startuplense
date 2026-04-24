@@ -4,6 +4,7 @@ import 'package:startup_lense/modules/idea_result/controller/idea_result-control
 import 'package:startup_lense/modules/idea_result/widgets/animated_score_ring.dart';
 import 'package:startup_lense/modules/idea_result/widgets/parallax_card.dart';
 import 'package:startup_lense/modules/idea_result/widgets/skeleton_box.dart';
+import 'package:startup_lense/routes/app_routes.dart';
 
 class ResultView extends GetView<ResultController> {
   const ResultView({super.key});
@@ -23,7 +24,7 @@ class ResultView extends GetView<ResultController> {
               children: [
                 _animatedCard(index: 1, child: _scoreCard(controller)),
                 const SizedBox(height: 20),
-        
+
                 _animatedCard(index: 2, child: Obx(() {
                   if (controller.isLoading.value) {
                     return _strategySkeleton();
@@ -31,7 +32,7 @@ class ResultView extends GetView<ResultController> {
                   return _marketCard();
                 }, )),
                 const SizedBox(height: 20),
-        
+
                 _animatedCard(index: 3, child: Obx(() {
                   if (controller.isLoading.value) {
                     return _strategySkeleton();
@@ -39,7 +40,7 @@ class ResultView extends GetView<ResultController> {
                   return _riskCard();
                 }),),
                 const SizedBox(height: 20),
-        
+
                 _animatedCard(index: 4, child: Obx(() {
                   if (controller.isLoading.value) {
                     return _strategySkeleton();
@@ -48,7 +49,7 @@ class ResultView extends GetView<ResultController> {
                 }),
                     ),
                 const SizedBox(height: 20),
-        
+
                 _animatedCard(index: 5, child: Obx(() {
                   if (controller.isLoading.value) {
                     return _strategySkeleton();
@@ -57,7 +58,7 @@ class ResultView extends GetView<ResultController> {
                 }),
                 ),
                 const SizedBox(height: 20),
-        
+
                 _animatedCard(index: 6, child: Obx(() {
                   if (controller.isLoading.value) {
                     return _strategySkeleton();
@@ -66,24 +67,24 @@ class ResultView extends GetView<ResultController> {
                 }),
                     ),
                 const SizedBox(height: 30),
-        
+
                 Obx(() {
                   if (controller.isLoading.value) {
                     return _strategySkeleton();
                   }
                   return _actionButtons();
                 }),
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
               ],
-        
+
             ),
           );
-        
+
         }),
       ),
     );
@@ -179,7 +180,7 @@ class ResultView extends GetView<ResultController> {
   }
 
   Widget _marketCard() {
-    return 
+    return
       ParallaxCard(
         child: Container(
         padding: const EdgeInsets.all(18),
@@ -190,7 +191,7 @@ class ResultView extends GetView<ResultController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-        
+
             // 🔷 TITLE
             const Text(
               "Market Intelligence",
@@ -200,14 +201,14 @@ class ResultView extends GetView<ResultController> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-        
+
             const SizedBox(height: 10),
-        
+
             Obx(() {
               if (controller.marketSignals.isEmpty) {
                 return const SizedBox(); // avoid empty crash
               }
-        
+
               return Wrap(
                 spacing: 8,
                 children: controller.marketSignals
@@ -215,24 +216,24 @@ class ResultView extends GetView<ResultController> {
                     .toList(),
               );
             }),
-        
+
             const SizedBox(height: 18),
-        
+
             // 🔷 3 COLUMN GRID
             Obx(() => Row(
               children: [
                 _metricColumn("Demand", controller.demand.value),
                 const SizedBox(width: 12),
-        
+
                 _metricColumn("Competition", controller.competition.value),
                 const SizedBox(width: 12),
-        
+
                 _metricColumn("Saturation", controller.saturation.value),
               ],
             )),
-        
+
             const SizedBox(height: 16),
-        
+
             // 🔷 INSIGHT
             Obx(() => Text(
               controller.marketInsight.value,
@@ -241,9 +242,9 @@ class ResultView extends GetView<ResultController> {
                 fontWeight: FontWeight.w500,
               ),
             )),
-        
+
             const SizedBox(height: 10),
-        
+
             // 🔷 TAGS
             Obx(() => Wrap(
               spacing: 8,
@@ -252,8 +253,8 @@ class ResultView extends GetView<ResultController> {
                   .map((tag) => _tag(tag))
                   .toList(),
             )),
-        
-        
+
+
           ],
         ),
             ),
@@ -342,7 +343,7 @@ class ResultView extends GetView<ResultController> {
 
 
   Widget _riskCard() {
-    return 
+    return
       ParallaxCard(
         child: Container(
         padding: const EdgeInsets.all(18),
@@ -353,7 +354,7 @@ class ResultView extends GetView<ResultController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-        
+
             // 🔷 TITLE
             const Text(
               "Risk Matrix",
@@ -363,24 +364,24 @@ class ResultView extends GetView<ResultController> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-        
+
             const SizedBox(height: 16),
-        
+
             // 🔷 TABLE
             Obx(() => Column(
               children: [
                 _riskRow("Market", controller.marketRisk.value),
                 Divider(color: Colors.white10),
-        
+
                 _riskRow("Financial", controller.financialRisk.value),
                 Divider(color: Colors.white10),
-        
+
                 _riskRow("Technical", controller.technicalRisk.value),
               ],
             )),
-        
+
             const SizedBox(height: 16),
-        
+
             // 🔷 INSIGHT
             Obx(() => Text(
               controller.riskInsight.value,
@@ -389,9 +390,9 @@ class ResultView extends GetView<ResultController> {
                 fontWeight: FontWeight.w500,
               ),
             )),
-        
+
             const SizedBox(height: 10),
-        
+
             // 🔷 CHIPS
             Obx(() => Wrap(
               spacing: 8,
@@ -504,7 +505,7 @@ class ResultView extends GetView<ResultController> {
   }
 
   Widget _structureCard() {
-    return 
+    return
       ParallaxCard(
         child: Container(
         padding: const EdgeInsets.all(18),
@@ -515,7 +516,7 @@ class ResultView extends GetView<ResultController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-        
+
             // 🔷 TITLE
             const Text(
               "Structure Validation",
@@ -525,25 +526,25 @@ class ResultView extends GetView<ResultController> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-        
+
             const SizedBox(height: 16),
-        
+
             // 🔷 ROWS
             Obx(() => Column(
               children: [
-        
+
                 _structureRow("Problem", controller.problemStrength.value),
                 Divider(color: Colors.white10),
-        
+
                 _structureRow("Value Proposition", controller.valuePropStrength.value),
                 Divider(color: Colors.white10),
-        
+
                 _structureRow("Audience", controller.audienceClarity.value),
               ],
             )),
-        
+
             const SizedBox(height: 26),
-        
+
             // 🔷 TAGS (CONSISTENT WITH OTHER CARDS)
             Obx(() => Wrap(
               spacing: 8,
@@ -635,7 +636,7 @@ class ResultView extends GetView<ResultController> {
     required String title,
     required Widget child,
   }) {
-    return 
+    return
       ParallaxCard(
         child: Container(
         width: double.infinity,
@@ -648,7 +649,7 @@ class ResultView extends GetView<ResultController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-        
+
             // 🔥 ICON ROW (CENTERED)
             Center(
               child: Icon(
@@ -657,9 +658,9 @@ class ResultView extends GetView<ResultController> {
                 color: const Color(0xFF06B6D4),
               ),
             ),
-        
+
             const SizedBox(height: 16),
-        
+
             // 🔥 TITLE (CENTERED)
             Center(
               child: Text(
@@ -671,9 +672,9 @@ class ResultView extends GetView<ResultController> {
                 ),
               ),
             ),
-        
+
             const SizedBox(height: 18),
-        
+
             child,
           ],
         ),
@@ -1128,7 +1129,8 @@ class ResultView extends GetView<ResultController> {
         Expanded(
           child: GestureDetector(
             onTap: () {
-              Get.toNamed('/improve-idea'); // ✅ adjust route if needed
+              Get.toNamed(AppRoutes.ANALYSIS, arguments: Get.arguments);
+
             },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16),

@@ -1,66 +1,159 @@
+import 'dart:async';
 import 'package:get/get.dart';
+import 'package:startup_lense/data/repositories/idea_repository.dart';
 import 'package:startup_lense/routes/app_routes.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class DashboardController extends GetxController {
-  // 🔥 Reactive Idea List (dummy data for now)
-  var ideas = [
-    {
-      "title": "AI Fitness App",
-      "score": 82,
-      "status": "Analyzed",
-    },
-    {
-      "title": "Smart Study Planner",
-      "score": 74,
-      "status": "Analyzed",
-    },
-    {
-      "title": "AI Travel Assistant",
-      "score": null,
-      "status": "Processing",
-    },
-  ].obs;
+  // ─── Ideas State ─────────────────────────────────────────
+  var ideas = <Map<String, dynamic>>[].obs;
+  var isLoading = true.obs;
 
+  // ─── Stats State (from users collection) ─────────────────
+  var totalIdeas = 0.obs;
+  var ideasAnalyzed = 0.obs;
+  var ideasInProcessing = 0.obs;
+  var isStatsLoading = true.obs;
 
-  void onAddIdea() async {
-    final result = await Get.toNamed(AppRoutes.IDEA_SUBMISSION);
+  final _firestore = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
 
-    if (result != null) {
-      ideas.insert(0, result);
-    }
-    Get.snackbar(
-      "Success",
-      "Idea analyzed successfully",
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
+  StreamSubscription? _ideasSubscription;
+  StreamSubscription? _statsSubscription;
 
-  // 👉 SEE ALL BUTTON
-  void onViewAll() {
-    Get.snackbar("Navigation", "Go to Idea History Screen");
-  }
-
-  // 👉 OPEN IDEA
-  void openIdea(Map idea) {
-    Get.toNamed('/analysis');
-  }
-
-  // 👉 LONG PRESS OPTIONS
-  void onIdeaLongPress(Map idea) {
-    // only logic trigger
-  }
-
+  // ─── Lifecycle ───────────────────────────────────────────
   @override
   void onReady() {
     super.onReady();
+    _listenToIdeas();
+    _listenToUserStats();
+  }
 
-    final result = Get.arguments;
+  @override
+  void onClose() {
+    _ideasSubscription?.cancel();
+    _statsSubscription?.cancel();
+    super.onClose();
+  }
 
+  // ─── Stream: Recent 5 Ideas ───────────────────────────────
+  void _listenToIdeas() {
+    isLoading.value = true;
+
+    _ideasSubscription = IdeaRepository().getUserIdeas().listen(
+          (fetchedIdeas) {
+        ideas.assignAll(fetchedIdeas);
+        isLoading.value = false;
+
+        // Derive "in processing" count from the fetched 5 ideas
+        // OR use a separate Firestore query — see _listenToUserStats below
+        _updateProcessingCount();
+      },
+      onError: (e) {
+        isLoading.value = false;
+        Get.snackbar(
+          "Error",
+          "Failed to load ideas. Please try again.",
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      },
+    );
+  }
+
+  // ─── Stream: User Stats from users collection ─────────────
+  void _listenToUserStats() {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    isStatsLoading.value = true;
+
+    _statsSubscription = _firestore
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .listen(
+          (doc) {
+        if (doc.exists) {
+          final stats = doc.data()?['stats'] as Map<String, dynamic>? ?? {};
+          totalIdeas.value = (stats['totalIdeas'] ?? 0) as int;
+          ideasAnalyzed.value = (stats['ideasAnalyzed'] ?? 0) as int;
+
+          // Processing = total - analyzed (derived, not stored separately)
+          final processing = totalIdeas.value - ideasAnalyzed.value;
+          ideasInProcessing.value = processing.clamp(0, totalIdeas.value);
+        }
+        isStatsLoading.value = false;
+      },
+      onError: (e) {
+        isStatsLoading.value = false;
+      },
+    );
+  }
+
+  /// Optionally re-derive processing from the recent-ideas list if you want
+  /// a quick local count while Firestore loads.
+  void _updateProcessingCount() {
+    if (!isStatsLoading.value) return; // already got real data from Firestore
+    final processing =
+        ideas.where((idea) => idea['status'] == 'Processing').length;
+    ideasInProcessing.value = processing;
+  }
+
+  // ─── Actions ─────────────────────────────────────────────
+  void onAddIdea() async {
+    final result = await Get.toNamed(AppRoutes.IDEA_SUBMISSION);
     if (result != null) {
-      ideas.insert(0, result);
+      Get.snackbar(
+        "Success",
+        "Idea submitted for analysis!",
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
+  void onViewAll() {
+    Get.toNamed("/idea-history");
+  }
 
+  void openIdea(Map idea) {
+    Get.toNamed('/analysis', arguments: idea);
+  }
 
+  void onIdeaLongPress(Map idea) {
+    // Handled in View via bottom sheet
+  }
+
+  // In DashboardController
+
+  Future<void> deleteIdea(Map idea) async {
+    final ideaId = idea['id'] as String?;
+    if (ideaId == null) return;
+
+    // ✅ Optimistic update — remove from UI instantly
+    ideas.removeWhere((i) => i['id'] == ideaId);
+
+    try {
+      await IdeaRepository().deleteIdea(ideaId);
+
+      Get.snackbar(
+        "Deleted",
+        "\"${idea['title']}\" has been removed.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.15),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      // ✅ Rollback — Firestore failed, restore stream will auto-correct
+      Get.snackbar(
+        "Error",
+        "Failed to delete idea. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.15),
+        colorText: Colors.white,
+      );
+    }
+  }
 }

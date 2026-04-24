@@ -73,59 +73,80 @@ class ResultController extends GetxController {
   var improvements = <String>[].obs;
 
   @override
+  @override
   void onInit() {
     super.onInit();
 
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 1), () {
       isLoading.value = false;
     });
 
-    final args = Get.arguments;
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
 
-    if (args != null) {
-      title.value = args["title"] ?? "";
-      score.value = args["score"] ?? 0;
-      verdictLine.value = args["verdict"] ?? "";
-      marketInsight.value = args["market"] ?? "";
+    // ── Core ─────────────────────────────────────────────────────────
+    title.value         = args['title']       ?? '';
+    score.value         = (args['score'] as num?)?.toInt() ?? 0;
+    verdictLine.value   = args['verdictLine'] ?? args['verdict'] ?? '';
+    marketInsight.value = args['market']      ?? '';
+    verdict.value       = args['verdict']     ?? 'Viable';
+    confidence.value    = args['confidence']  ?? 'Medium';
+    agreement.value     = args['agreement']   ?? 'Medium';
+
+    // ── Market ───────────────────────────────────────────────────────
+    demand.value        = args['demand']      ?? 'Medium';
+    competition.value   = args['competition'] ?? 'Medium';
+    saturation.value    = args['saturation']  ?? 'Medium';
+
+    final ms = args['marketSignals'];
+    if (ms is List) marketSignals.assignAll(List<String>.from(ms));
+
+    final mt = args['marketTags'];
+    if (mt is List) marketTags.assignAll(List<String>.from(mt));
+
+    // ── Risk ─────────────────────────────────────────────────────────
+    marketRisk.value    = args['marketRisk']    ?? 'Medium';
+    financialRisk.value = args['financialRisk'] ?? 'Medium';
+    technicalRisk.value = args['technicalRisk'] ?? 'Medium';
+    riskInsight.value   = args['riskInsight']   ?? '';
+
+    final rt = args['riskTags'];
+    if (rt is List) riskTags.assignAll(List<String>.from(rt));
+
+    // ── Structure ────────────────────────────────────────────────────
+    problem.value          = args['problemStatement']  ?? '';
+    valueProp.value        = args['valuePropFull']     ?? '';
+    revenue.value          = args['revenueModel']      ?? '';
+    businessModel.value    = args['businessModelType'] ?? args['businessModel'] ?? '';
+    problemStrength.value  = args['problemStrength']   ?? 'Medium';
+    valuePropStrength.value = args['valuePropStrength'] ?? 'Medium';
+    audienceClarity.value  = args['audienceClarity']   ?? 'Moderate';
+
+    final kr = args['keyResources'];
+    if (kr is List) structureTags.assignAll(List<String>.from(kr));
+
+    // ── Strategy ─────────────────────────────────────────────────────
+    businessModel.value = args['businessModel'] ?? '';
+    marketing.value     = (args['marketingChannels'] as List?)?.join(', ') ?? '';
+
+    final mc = args['marketingChannels'];
+    if (mc is List) marketingChannels.assignAll(List<String>.from(mc));
+
+    final phases = args['launchPhases'] as List?;
+    if (phases != null && phases.isNotEmpty) {
+      phaseOne.value    = phases.length > 0 ? phases[0]['title'] ?? '' : '';
+      phaseTwo.value    = phases.length > 1 ? phases[1]['title'] ?? '' : '';
+      launchPhase.value = phases.length > 0 ? phases[0]['title'] ?? '' : '';
     }
 
-    riskInsight.value = "Moderate financial and execution risk";
-    problem.value = "Students lack centralized idea validation tools";
-    valueProp.value = "Fast AI-driven idea scoring";
+    final rs = args['revenueStreams'];
+    if (rs is List) strategyTags.assignAll(List<String>.from(rs));
 
-    revenue.value = "Subscription + Commission model";
-    businessModel.value = "Freemium SaaS";
+    // ── Final evaluation ─────────────────────────────────────────────
+    finalVerdict.value     = args['finalVerdict']     ?? args['verdict'] ?? '';
+    finalExplanation.value = args['finalExplanation'] ?? '';
 
-    launchPhase.value = "Phase 1 → University testing";
-
-    marketing.value = "University ambassadors + social media";
-
-    finalVerdict.value = "Viable";
-
-    finalExplanation.value =
-    "Strong validation signals but requires niche focus.";
-
-
-    improvements.assignAll([
-      "Improve differentiation",
-      "Reduce competition overlap",
-      "Focus on student niche",
-    ]);
-
-    marketSignals.assignAll([
-      "Rising Trend",
-      "Niche Gap",
-    ]);
-
-    riskTags.assignAll([
-      "Low entry barrier",
-      "Burn rate concern",
-    ]);
-
-    structureTags.assignAll([
-      "Clear problem definition",
-      "Target audience identified",
-    ]);
+    final impr = args['improvements'];
+    if (impr is List) improvements.assignAll(List<String>.from(impr));
 
     _startSequence();
   }

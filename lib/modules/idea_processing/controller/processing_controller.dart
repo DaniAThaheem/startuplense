@@ -1,124 +1,133 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
+import 'package:startup_lense/data/agents/agent_runner.dart';
 import 'package:startup_lense/routes/app_routes.dart';
 
 class ProcessingController extends GetxController {
-  // Progress 0 → 100
-  var progress = 0.0.obs;
 
-  // Steps status
-  var steps = [
-    {"title": "Structuring Idea", "status": "done"},
-    {"title": "Market Analysis", "status": "processing"},
-    {"title": "Risk Assessment", "status": "waiting"},
+  // ── UI State ──────────────────────────────────────────────────────
+  var progress = 0.0.obs;
+  var statusText = "Initializing AI agents...".obs;
+  var steps = <Map<String, String>>[
+    {"title": "Idea Structuring",    "status": "waiting"},
+    {"title": "Market Analysis",     "status": "waiting"},
+    {"title": "Risk Assessment",     "status": "waiting"},
     {"title": "Strategy Generation", "status": "waiting"},
+    {"title": "Final Evaluation",    "status": "waiting"},
   ].obs;
 
-  // Dynamic status text
-  var statusText = "Analyzing market conditions...".obs;
-
-  final List<String> messages = [
-    "Analyzing market conditions...",
-    "Evaluating competition landscape...",
-    "Estimating risk factors...",
-    "Generating strategy insights...",
-    "Almost done...",
+  // ── Agent metadata ────────────────────────────────────────────────
+  static const _agentOrder = [
+    'structuring', 'market', 'risk', 'strategy', 'evaluation',
   ];
+  static const _agentMessages = {
+    'structuring': 'Structuring your business model...',
+    'market':      'Analyzing market landscape...',
+    'risk':        'Evaluating risks and opportunities...',
+    'strategy':    'Generating go-to-market strategy...',
+    'evaluation':  'Calculating viability score...',
+  };
+  static const _agentProgressDone = {
+    'structuring': 20.0,
+    'market':      40.0,
+    'risk':        60.0,
+    'strategy':    80.0,
+    'evaluation':  100.0,
+  };
 
-  Timer? _progressTimer;
-  Timer? _textTimer;
+  // ── Private ───────────────────────────────────────────────────────
+  late String _ideaId;
+  late String _ideaTitle;
+  late Map<String, dynamic> _ideaData;
+  bool _navigated = false;
 
-  late String ideaTitle;
+  final _runner = AgentRunner();
 
-
-  void _startProcessing() {
-    _progressTimer = Timer.periodic(const Duration(milliseconds: 80), (timer) {
-      if (progress.value >= 100) {
-        timer.cancel();
-        _completeFlow();
-        return;
-      }
-
-      progress.value += 0.5;
-
-      _updateSteps();
-    });
+  // ── Lifecycle ─────────────────────────────────────────────────────
+  @override
+  void onInit() {
+    super.onInit();
+    _ideaId    = Get.arguments?['ideaId'] ?? '';
+    _ideaTitle = Get.arguments?['title']  ?? 'Untitled Idea';
+    _runPipeline();
   }
 
-  void _updateSteps() {
-    if (progress.value > 25) {
-      steps[1]["status"] = "done";
-      steps[2]["status"] = "processing";
+  // ── Pipeline ──────────────────────────────────────────────────────
+  Future<void> _runPipeline() async {
+    // Read the idea data submitted to Firestore
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('ideas')
+          .doc(_ideaId)
+          .get();
+      _ideaData = snap.data()!;
+    } catch (e) {
+      Get.snackbar('Error', 'Could not load idea: $e');
+      Get.back();
+      return;
     }
-    if (progress.value > 50) {
-      steps[2]["status"] = "done";
-      steps[3]["status"] = "processing";
+
+    try {
+      final result = await _runner.run(
+        ideaId:       _ideaId,
+        title:        _ideaData['title']        ?? _ideaTitle,
+        problem:      _ideaData['problem']       ?? '',
+        customers:    List<String>.from(_ideaData['targetCustomers'] ?? []),
+        city:         _ideaData['city']          ?? '',
+        businessType: _ideaData['businessType']  ?? '',
+        budget:       (_ideaData['budget'] as num?)?.toDouble() ?? 0.0,
+        onProgress: _onAgentProgress,
+      );
+
+      if (!_navigated) {
+        _navigated = true;
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.offNamed(
+          AppRoutes.RESULT,
+          arguments: result.toArguments(
+            ideaId: _ideaId,
+            title:  _ideaTitle,
+          ),
+        );
+      }
+    } catch (e) {
+      // Mark failed in Firestore
+      await FirebaseFirestore.instance
+          .collection('ideas')
+          .doc(_ideaId)
+          .update({'status': 'failed', 'errorMessage': e.toString()});
+
+      Get.snackbar('Analysis Failed', e.toString());
+      Get.back();
     }
-    if (progress.value > 75) {
-      steps[3]["status"] = "done";
+  }
+
+  // ── Progress callback from AgentRunner ────────────────────────────
+  void _onAgentProgress(String agentName, bool isDone) {
+    final idx = _agentOrder.indexOf(agentName);
+    if (idx == -1) return;
+
+    if (!isDone) {
+      // Agent just started
+      statusText.value = _agentMessages[agentName] ?? '';
+      steps[idx] = {"title": steps[idx]["title"]!, "status": "processing"};
+    } else {
+      // Agent completed
+      steps[idx] = {"title": steps[idx]["title"]!, "status": "done"};
+      progress.value = _agentProgressDone[agentName]!;
     }
     steps.refresh();
   }
 
-  void _rotateMessages() {
-    int index = 0;
-    _textTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      statusText.value = messages[index % messages.length];
-      index++;
-    });
-  }
-
+  // ── Cancel ────────────────────────────────────────────────────────
   void cancelProcessing() {
-    _progressTimer?.cancel();
-    _textTimer?.cancel();
+    _navigated = true; // prevent navigation after cancel
+    FirebaseFirestore.instance
+        .collection('ideas')
+        .doc(_ideaId)
+        .update({'status': 'cancelled'});
     Get.back();
-    Get.snackbar("Cancelled", "Analysis cancelled");
-  }
-
-  void _completeFlow() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final result = {
-      "title": ideaTitle,
-      "score": 85,
-      "status": "Analyzed",
-    };
-
-    goToResult();
-  }
-
-
-  void goToResult() async {
-    await Future.delayed(const Duration(seconds: 2));
-
-    Get.offNamed(
-      AppRoutes.RESULT,
-      arguments: {
-        "title": "AI Food Delivery for Students",
-        "score": 78,
-        "verdict": "Viable with moderate competition",
-        "market": "High demand detected",
-      },
-    );
-  }
-
-
-
-  @override
-  void onInit() {
-    super.onInit();
-
-    ideaTitle = Get.arguments?["title"] ?? "Untitled Idea";
-
-    _startProcessing();
-    _rotateMessages();
-  }
-
-
-  @override
-  void onClose() {
-    _progressTimer?.cancel();
-    _textTimer?.cancel();
-    super.onClose();
+    Get.snackbar('Cancelled', 'Analysis cancelled');
   }
 }

@@ -25,12 +25,12 @@ class DashboardView extends GetView<DashboardController> {
               color: const Color(0xFF06B6D4).withOpacity(0.5),
               blurRadius: 18,
               spreadRadius: 2,
-              offset: const Offset(0, 6), // depth
+              offset: const Offset(0, 6),
             ),
             const BoxShadow(
               color: Colors.black54,
               blurRadius: 12,
-              offset: Offset(0, 4), // shadow base
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -43,45 +43,33 @@ class DashboardView extends GetView<DashboardController> {
         ),
       ),
 
-
       body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _topBar(),
-                const SizedBox(height: 24),
-
-                _insightSection(),
-
-                const SizedBox(height: 24),
-
-                _heroSection(),
-
-                const SizedBox(height: 24),
-
-                _recentSection(context),
-              ],
-            ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _topBar(),
+              const SizedBox(height: 24),
+              _insightSection(),
+              const SizedBox(height: 24),
+              _heroSection(),
+              const SizedBox(height: 24),
+              _recentSection(context),
+            ],
           ),
         ),
+      ),
     );
   }
 
-  // ---------------- APP BAR ----------------
+  // ─── TOP BAR ──────────────────────────────────────────────
   Widget _topBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // LEFT LOGO (same as login/signup)
-        const Icon(
-          Icons.bolt, // ⚡ same identity
-          color: Color(0xFF06B6D4),
-          size: 30,
-        ),
+        const Icon(Icons.bolt, color: Color(0xFF06B6D4), size: 30),
 
-        // CENTER TITLE (brand gradient feel)
         ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
             colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
@@ -97,14 +85,11 @@ class DashboardView extends GetView<DashboardController> {
           ),
         ),
 
-        // RIGHT SIDE
         Row(
           children: [
             Stack(
               children: [
                 const Icon(Icons.notifications_none, color: Colors.white70),
-
-                // notification dot
                 Positioned(
                   right: 0,
                   top: 0,
@@ -122,22 +107,19 @@ class DashboardView extends GetView<DashboardController> {
             const SizedBox(width: 12),
             InkWell(
               borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                Get.find<MainController>().changeIndex(3);
-              },
+              onTap: () => Get.find<MainController>().changeIndex(3),
               child: const CircleAvatar(
                 radius: 14,
                 backgroundColor: Color(0xFF111827),
               ),
-            )
+            ),
           ],
         ),
       ],
     );
   }
 
-
-  // ---------------- INSIGHTS ----------------
+  // ─── INSIGHTS ─────────────────────────────────────────────
   Widget _insightSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,18 +134,35 @@ class DashboardView extends GetView<DashboardController> {
           ),
         ),
         const SizedBox(height: 16),
+        Obx(() {
+          // Show skeleton while EITHER ideas OR stats are loading
+          if (controller.isLoading.value || controller.isStatsLoading.value) {
+            return SizedBox(
+              height: 144,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: List.generate(3, (_) => _insightCardSkeleton()),
+              ),
+            );
+          }
 
-        SizedBox(
-          height: 144,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _insightCard(Icons.lightbulb, "24", "Total Ideas", "+12%"),
-              _insightCard(Icons.bar_chart, "18", "Validated", "+5%"),
-              _insightCard(Icons.compare, "6", "Compared", "+3%"),
-            ],
-          ),
-        ),
+          // ✅ Real data from users collection (not just the 5 recent ideas)
+          final total = controller.totalIdeas.value;
+          final analyzed = controller.ideasAnalyzed.value;
+          final processing = controller.ideasInProcessing.value;
+
+          return SizedBox(
+            height: 144,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _insightCard(Icons.lightbulb, "$total", "Total Ideas", "+$total"),
+                _insightCard(Icons.bar_chart, "$analyzed", "Validated", "+$analyzed"),
+                _insightCard(Icons.compare, "$processing", "Processing", "$processing"),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
@@ -171,7 +170,7 @@ class DashboardView extends GetView<DashboardController> {
   Widget _insightCard(
       IconData icon, String value, String label, String growth) {
     return Container(
-      width: Get.width * 0.6, // 👈 2 cards per screen
+      width: Get.width * 0.6,
       margin: const EdgeInsets.only(right: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -187,9 +186,7 @@ class DashboardView extends GetView<DashboardController> {
           Text(
             value,
             style: const TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.bold),
+                color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(label, style: const TextStyle(color: Colors.white54)),
@@ -203,7 +200,33 @@ class DashboardView extends GetView<DashboardController> {
     );
   }
 
-  // ---------------- HERO ----------------
+  /// Shimmer-style skeleton for insight cards while loading
+  Widget _insightCardSkeleton() {
+    return Container(
+      width: Get.width * 0.6,
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _shimmerBox(width: 22, height: 22, radius: 4),
+          const Spacer(),
+          _shimmerBox(width: 60, height: 28, radius: 6),
+          const SizedBox(height: 8),
+          _shimmerBox(width: 90, height: 14, radius: 4),
+          const SizedBox(height: 8),
+          _shimmerBox(width: 40, height: 12, radius: 4),
+        ],
+      ),
+    );
+  }
+
+  // ─── HERO ─────────────────────────────────────────────────
   Widget _heroSection() {
     return Container(
       width: double.infinity,
@@ -226,10 +249,7 @@ class DashboardView extends GetView<DashboardController> {
           const Text(
             "Evaluate a New Startup Idea",
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+                color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -237,32 +257,15 @@ class DashboardView extends GetView<DashboardController> {
             style: TextStyle(color: Colors.white60),
           ),
           const SizedBox(height: 20),
-
-          // CTA Button
           GestureDetector(
-            onTap: () async {
-              final result = await Get.toNamed(AppRoutes.IDEA_SUBMISSION);
-
-              if (result != null) {
-                controller.ideas.insert(0, result);
-
-                Get.snackbar(
-                  "Success",
-                  "Idea analyzed successfully",
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-              }
-            },
+            onTap: controller.onAddIdea,
             child: Container(
               height: 52,
               width: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF4F46E5),
-                    Color(0xFF06B6D4),
-                  ],
+                  colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
                 ),
               ),
               child: const Row(
@@ -278,50 +281,34 @@ class DashboardView extends GetView<DashboardController> {
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  // ---------------- RECENT HEADER ----------------
-  Widget _recentHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
-        Text("RECENT EVALUATIONS",
-            style: TextStyle(color: Colors.white70)),
-        Text("See all", style: TextStyle(color: Colors.cyanAccent)),
-      ],
-    );
-  }
-
-  // ---------------- RECENT LIST ----------------
+  // ─── RECENT SECTION ───────────────────────────────────────
   Widget _recentSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // HEADER ROW
+        // Header
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
               "Recent Evaluations",
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600),
             ),
-
             GestureDetector(
-              onTap: controller.onViewAll, // 👈 add this in controller
+              onTap: controller.onViewAll,
               child: const Text(
                 "See All",
                 style: TextStyle(
-                  color: Color(0xFF06B6D4),
-                  fontWeight: FontWeight.w500,
-                ),
+                    color: Color(0xFF06B6D4), fontWeight: FontWeight.w500),
               ),
             ),
           ],
@@ -329,18 +316,31 @@ class DashboardView extends GetView<DashboardController> {
 
         const SizedBox(height: 16),
 
-        // LIST
         Obx(() {
+          // ── Loading state ──
+          if (controller.isLoading.value) {
+            return Column(
+              children: List.generate(3, (_) => _ideaCardSkeleton()),
+            );
+          }
+
+          // ── Empty state ──
+          if (controller.ideas.isEmpty) {
+            return _emptyState();
+          }
+
+          // ── Populated list ──
           return Column(
             children: controller.ideas.map((idea) {
               return _ideaCard(context, idea);
             }).toList(),
-
           );
         }),
       ],
     );
   }
+
+  // ─── IDEA CARD ────────────────────────────────────────────
   Widget _ideaCard(BuildContext context, Map idea) {
     final isAnalyzed = idea["status"] == "Analyzed";
 
@@ -358,22 +358,20 @@ class DashboardView extends GetView<DashboardController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // TOP ROW
+            // Top row: title + score
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
-                    idea["title"],
+                    idea["title"] ?? "Untitled",
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-
                 if (idea["score"] != null)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -385,9 +383,8 @@ class DashboardView extends GetView<DashboardController> {
                     child: Text(
                       "${idea["score"]}/100",
                       style: const TextStyle(
-                        color: Color(0xFF06B6D4),
-                        fontWeight: FontWeight.w600,
-                      ),
+                          color: Color(0xFF06B6D4),
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
               ],
@@ -395,7 +392,7 @@ class DashboardView extends GetView<DashboardController> {
 
             const SizedBox(height: 10),
 
-            // STATUS CHIP
+            // Status chip
             Container(
               padding:
               const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -406,27 +403,30 @@ class DashboardView extends GetView<DashboardController> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                idea["status"],
+                idea["status"] ?? "Unknown",
                 style: TextStyle(
-                  color: isAnalyzed ? Colors.green : Colors.orange,
-                  fontSize: 12,
-                ),
+                    color: isAnalyzed ? Colors.green : Colors.orange,
+                    fontSize: 12),
               ),
             ),
 
             const SizedBox(height: 10),
 
-            // BOTTOM ROW
+            // Bottom row: date + city
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 Text(
-                  "2 days ago",
-                  style: TextStyle(color: Colors.white38, fontSize: 12),
+                  _formatDate(idea["createdAt"]),
+                  style:
+                  const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
                 Text(
-                  "AI / Startup",
-                  style: TextStyle(color: Colors.white38, fontSize: 12),
+                  idea["city"]?.isNotEmpty == true
+                      ? idea["city"]
+                      : "AI / Startup",
+                  style:
+                  const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
               ],
             ),
@@ -435,6 +435,79 @@ class DashboardView extends GetView<DashboardController> {
       ),
     );
   }
+
+  // ─── SKELETON CARD ────────────────────────────────────────
+  Widget _ideaCardSkeleton() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _shimmerBox(width: 160, height: 16, radius: 4),
+              _shimmerBox(width: 56, height: 26, radius: 20),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _shimmerBox(width: 80, height: 24, radius: 20),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _shimmerBox(width: 70, height: 12, radius: 4),
+              _shimmerBox(width: 70, height: 12, radius: 4),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── EMPTY STATE ──────────────────────────────────────────
+  Widget _emptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.lightbulb_outline,
+            size: 48,
+            color: Colors.white.withOpacity(0.15),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "No ideas yet",
+            style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Tap the + button to submit your first startup idea.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white38, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── BOTTOM SHEET ─────────────────────────────────────────
   void _showIdeaOptions(BuildContext context, Map idea) {
     showModalBottomSheet(
       context: context,
@@ -453,24 +526,55 @@ class DashboardView extends GetView<DashboardController> {
               ListTile(
                 title: const Text("Re-run Analysis",
                     style: TextStyle(color: Colors.white)),
-                onTap: () => {
-                  Navigator.pop(context),
-                  Get.toNamed(
-                    '/improve-idea',
-                    arguments: idea,
-                  ),
-
-                }
+                onTap: () {
+                  Navigator.pop(context);
+                  Get.toNamed('/improve-idea', arguments: idea);
+                },
               ),
               ListTile(
                 title: const Text("Compare",
                     style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
+              // In _showIdeaOptions() — replace the Delete ListTile:
+
               ListTile(
-                title: const Text("Delete",
-                    style: TextStyle(color: Colors.red)),
-                onTap: () => Navigator.pop(context),
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text("Delete", style: TextStyle(color: Colors.red)),
+                onTap: () async {
+                  Navigator.pop(context); // close bottom sheet first
+
+                  // ✅ Confirm before deleting
+                  final confirmed = await Get.dialog<bool>(
+                    AlertDialog(
+                      backgroundColor: const Color(0xFF111827),
+                      title: const Text(
+                        "Delete Idea",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      content: Text(
+                        "Are you sure you want to delete \"${idea['title']}\"?",
+                        style: const TextStyle(color: Colors.white54),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Get.back(result: false),
+                          child: const Text("Cancel",
+                              style: TextStyle(color: Colors.white54)),
+                        ),
+                        TextButton(
+                          onPressed: () => Get.back(result: true),
+                          child: const Text("Delete",
+                              style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed == true) {
+                    await controller.deleteIdea(idea);
+                  }
+                },
               ),
             ],
           ),
@@ -479,5 +583,89 @@ class DashboardView extends GetView<DashboardController> {
     );
   }
 
+  // ─── HELPERS ──────────────────────────────────────────────
 
+  /// Converts a Firestore Timestamp or DateTime to a readable relative string.
+  String _formatDate(dynamic createdAt) {
+    if (createdAt == null) return "Unknown";
+
+    DateTime date;
+
+    // Firestore Timestamp has a .toDate() method
+    if (createdAt is DateTime) {
+      date = createdAt;
+    } else {
+      try {
+        date = createdAt.toDate();
+      } catch (_) {
+        return "Unknown";
+      }
+    }
+
+    final diff = DateTime.now().difference(date);
+
+    if (diff.inDays >= 1) return "${diff.inDays}d ago";
+    if (diff.inHours >= 1) return "${diff.inHours}h ago";
+    if (diff.inMinutes >= 1) return "${diff.inMinutes}m ago";
+    return "Just now";
+  }
+
+  /// A pulsing shimmer-style placeholder box.
+  Widget _shimmerBox(
+      {required double width, required double height, double radius = 4}) {
+    return _ShimmerBox(width: width, height: height, radius: radius);
+  }
+}
+
+// ─── Shimmer box widget with animation ────────────────────────
+class _ShimmerBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double radius;
+
+  const _ShimmerBox(
+      {required this.width, required this.height, required this.radius});
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+
+    _anim = Tween<double>(begin: 0.04, end: 0.12).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(_anim.value),
+          borderRadius: BorderRadius.circular(widget.radius),
+        ),
+      ),
+    );
+  }
 }

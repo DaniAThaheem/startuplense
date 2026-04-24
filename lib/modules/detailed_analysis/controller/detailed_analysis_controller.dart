@@ -127,16 +127,80 @@ class DetailedAnalysisController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
-    // 👇 Listen to vertical scroll
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null) loadRealData(args);   // ← add this line
     itemPositionsListener.itemPositions.addListener(_onScroll);
-
-    // 👇 Delay initial jump (prevents attach crash)
     Future.delayed(const Duration(milliseconds: 300), () {
       if (tabController.isAttached) {
         tabController.jumpTo(index: selectedIndex.value);
       }
     });
+  }
+
+  void loadRealData(Map<String, dynamic> args) {
+    final market     = _safeMap(args['swot'] != null ? args : null, 'market');
+    final risk       = _safeMap(args, 'swot');
+    final strategy   = args;
+    final evaluation = args;
+
+    // Market data
+    marketData.value = MarketModel(
+      title:       "Demand vs Competition",
+      description: args['marketSignals'] is List
+          ? (args['marketSignals'] as List).join(' · ')
+          : marketData.value.description,
+      sentiment:   args['marketSentiment']  ?? marketData.value.sentiment,
+      tam:         args['tam']              ?? marketData.value.tam,
+      demand:      _levelToDouble(args['demand']),
+      competition: _levelToDouble(args['competition']),
+      scalability: _levelToDouble(args['saturation'], invert: true),
+    );
+
+    // Financial data
+    financialData.value = FinancialModel(
+      capex:      (args['capex'] as num?)?.toDouble() ?? 280000,
+      burnRate:   args['burnRate']   ?? financialData.value.burnRate,
+      roi:        args['roiHorizon'] ?? financialData.value.roi,
+      confidence: ((args['coreAlignmentScore'] as num?)?.toDouble() ?? 0.92) * 100,
+    );
+
+    // SWOT
+    final swot = args['swot'] as Map<String, dynamic>? ?? {};
+    final s = swot['strengths']     as List?;
+    final w = swot['weaknesses']    as List?;
+    final o = swot['opportunities'] as List?;
+    final t = swot['threats']       as List?;
+    if (s != null && s.isNotEmpty) strengths.assignAll(List<String>.from(s));
+    if (w != null && w.isNotEmpty) weaknesses.assignAll(List<String>.from(w));
+    if (o != null && o.isNotEmpty) opportunities.assignAll(List<String>.from(o));
+    if (t != null && t.isNotEmpty) threats.assignAll(List<String>.from(t));
+
+    // Core alignment
+    coreAlignment.value = CoreAlignmentModel(
+      matchScore:  (args['coreAlignmentScore'] as num?)?.toDouble() ?? 0.92,
+      description: args['coreAlignmentDesc'] ?? coreAlignment.value.description,
+    );
+
+    // Metric score
+    final ms = args['metricScore'];
+    if (ms != null) metricScore.value = (ms as num).toDouble();
+  }
+
+  Map<String, dynamic> _safeMap(Map<String, dynamic>? source, String key) {
+    if (source == null) return {};
+    final v = source[key];
+    return v is Map ? Map<String, dynamic>.from(v) : {};
+  }
+
+  double _levelToDouble(dynamic level, {bool invert = false}) {
+    double v;
+    switch ((level as String? ?? '').toLowerCase()) {
+      case 'high':   v = 0.85; break;
+      case 'medium': v = 0.55; break;
+      case 'low':    v = 0.25; break;
+      default:       v = 0.50;
+    }
+    return invert ? (1.0 - v) : v;
   }
 
   // 🔷 SCROLL SYNC (SECTION → TAB)

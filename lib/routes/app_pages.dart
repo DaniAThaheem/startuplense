@@ -29,21 +29,29 @@ class AppPages {
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
       binding: LoginBinding(),
     ),
     GetPage(
       name: AppRoutes.signup,
       page: () => const SignupView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
       binding: SignupBinding(),
     ),
     GetPage(
       name: AppRoutes.MAIN,
       page: () => const MainView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
       binding: MainBinding(),
     ),
     GetPage(
       name: AppRoutes.DASHBOARD,
       page: () => const DashboardView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
       binding: DashboardBinding(),
     ),
     GetPage(
@@ -71,17 +79,23 @@ class AppPages {
     GetPage(
       name: AppRoutes.IDEA_RESULT,
       page: () => const ProcessingView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
     ),
 
     GetPage(
       name: AppRoutes.IMPROVE_IDEA,
       page: () => const IdeaImproveView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
       binding: IdeaImproveBinding(),
     ),
 
     GetPage(
       name: AppRoutes.RESULT,
       page: () => ResultView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
       binding: BindingsBuilder(() {
         Get.lazyPut<ResultController>(() => ResultController());
       }),
@@ -92,6 +106,8 @@ class AppPages {
     GetPage(
       name:AppRoutes.ANALYSIS,
       page: () => const DetailedAnalysisView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
       binding: DetailedAnalysisBinding(),
     ),
 

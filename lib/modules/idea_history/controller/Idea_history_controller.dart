@@ -1,23 +1,25 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import 'package:startup_lense/modules/main/controller/main_controller.dart';
-
+import 'package:startup_lense/data/repositories/idea_repository.dart';
+import 'package:flutter/material.dart';
 
 enum SortType { highest, lowest, recent }
 enum IdeaStatus { analyzed, processing }
 enum ScoreRange { low, mid, high }
 
-
-
 class IdeaModel {
+  final String id;
   final String title;
   final String description;
   final String category;
-  final int score;
+  final num score;
   final String status;
   final String date;
   final String tag;
+  final DocumentSnapshot snapshot; // pagination cursor
 
   IdeaModel({
+    required this.id,
     required this.title,
     required this.description,
     required this.category,
@@ -25,113 +27,154 @@ class IdeaModel {
     required this.status,
     required this.date,
     required this.tag,
+    required this.snapshot,
   });
+
+  factory IdeaModel.fromMap(Map<String, dynamic> map) {
+    return IdeaModel(
+      id: map['id'] ?? '',
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      category: map['category'] ?? 'GENERAL',
+      score: map['score'] ?? 0,
+      status: map['status'] ?? 'Processing',
+      date: map['date'] ?? '',
+      tag: map['tag'] ?? '',
+      snapshot: map['snapshot'] as DocumentSnapshot,
+    );
+  }
 }
 
 class IdeaHistoryController extends GetxController {
-  var allIdeas = <IdeaModel>[].obs;       // MASTER DATA
-  var filteredIdeas = <IdeaModel>[].obs;  // UI DATA
+  final _repo = IdeaRepository();
+  static const _pageSize = 10;
 
+  // ─── Ideas ───────────────────────────────────────────────
+  var allIdeas = <IdeaModel>[].obs;      // all loaded pages
+  var filteredIdeas = <IdeaModel>[].obs; // filtered + sorted view
+
+  // ─── Pagination ──────────────────────────────────────────
+  DocumentSnapshot? _lastDoc;
+  var isLoadingMore = false.obs;
+  var hasMore = true.obs;
+
+  // ─── Stats (from Firestore aggregation) ──────────────────
+  var statTotal = 0.obs;
+  var statAvgScore = 0.0.obs;
+  var statBestScore = 0.obs;
+  var isStatsLoading = true.obs;
+
+  // ─── Page Loading ─────────────────────────────────────────
+  var isLoading = true.obs;
+
+  // ─── Filters ─────────────────────────────────────────────
   var isSearching = false.obs;
   var searchQuery = ''.obs;
-
-  final selectedSort = SortType.highest.obs;
+  final selectedSort = SortType.recent.obs;
   final selectedStatus = <IdeaStatus>{}.obs;
   final selectedScoreRange = Rxn<ScoreRange>();
 
   @override
   void onInit() {
     super.onInit();
-    loadDummyData();
+    _loadFirstPage();
+    _loadStats();
   }
 
-  void loadDummyData() {
-    final data = [
-      IdeaModel(
-        title: "Eco-Friendly Logistics",
-        description: "AI routing for electric fleets",
-        category: "SUSTAINABILITY",
-        score: 88,
-        status: "Analyzed",
-        date: "OCT 24, 2023",
-        tag: "High Potential",
-      ),
-      IdeaModel(
-        title: "Micro-SaaS Escrow",
-        description: "Fintech escrow system",
-        category: "FINTECH",
-        score: 62,
-        status: "Processing",
-        date: "OCT 22, 2023",
-        tag: "",
-      ),
-      IdeaModel(
-        title: "Biometric Sleep Tuning",
-        description: "Health optimization system",
-        category: "HEALTH TECH",
-        score: 92,
-        status: "Analyzed",
-        date: "OCT 20, 2023",
-        tag: "Moonshot",
-      ),
-      IdeaModel(
-        title: "Civic DAOs",
-        description: "Web3 governance",
-        category: "WEB3",
-        score: 45,
-        status: "Analyzed",
-        date: "OCT 18, 2023",
-        tag: "Low Feasibility",
-      ),
-    ];
+  // ─── LOAD FIRST PAGE ─────────────────────────────────────
+  Future<void> _loadFirstPage() async {
+    isLoading.value = true;
+    _lastDoc = null;
+    hasMore.value = true;
 
-    allIdeas.assignAll(data);
+    try {
+      final results = await _repo.getUserIdeasPaginated(limit: _pageSize);
+      final models = results.map(IdeaModel.fromMap).toList();
 
-    // 🔥 IMPORTANT: default = show ALL
-    filteredIdeas.assignAll(allIdeas);
+      allIdeas.assignAll(models);
+
+      if (models.isNotEmpty) {
+        _lastDoc = models.last.snapshot;
+      }
+
+      hasMore.value = models.length == _pageSize;
+      applyFilters();
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load ideas.");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  // 🔍 SEARCH
-  void searchIdeas(String query) {
-    searchQuery.value = query;
-    applyFilters(); // 🔥 ALWAYS call this
+  // ─── LOAD NEXT PAGE (called on scroll end) ────────────────
+  Future<void> loadMore() async {
+    if (isLoadingMore.value || !hasMore.value) return;
+
+    isLoadingMore.value = true;
+
+    try {
+      final results = await _repo.getUserIdeasPaginated(
+        lastDoc: _lastDoc,
+        limit: _pageSize,
+      );
+      final models = results.map(IdeaModel.fromMap).toList();
+
+      allIdeas.addAll(models);
+
+      if (models.isNotEmpty) {
+        _lastDoc = models.last.snapshot;
+      }
+
+      hasMore.value = models.length == _pageSize;
+      applyFilters();
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load more ideas.");
+    } finally {
+      isLoadingMore.value = false;
+    }
   }
 
-  // 🧠 MAIN FILTER ENGINE (THIS IS THE CORE FIX)
+  // ─── STATS ───────────────────────────────────────────────
+  Future<void> _loadStats() async {
+    isStatsLoading.value = true;
+    try {
+      final stats = await _repo.getUserIdeaStats();
+      statTotal.value = stats['total'] as int;
+      statAvgScore.value = stats['avgScore'] as double;
+      statBestScore.value = stats['bestScore'] as int;
+    } catch (_) {
+    } finally {
+      isStatsLoading.value = false;
+    }
+  }
+
+  // ─── FILTER ENGINE ───────────────────────────────────────
   void applyFilters() {
     var temp = allIdeas.toList();
 
-    // 🔍 SEARCH
     if (searchQuery.value.isNotEmpty) {
       temp = temp.where((idea) =>
           idea.title.toLowerCase().contains(searchQuery.value.toLowerCase())
       ).toList();
     }
 
-    // 📊 STATUS
     if (selectedStatus.isNotEmpty) {
       temp = temp.where((idea) {
-        return selectedStatus.any((status) =>
-        idea.status.toLowerCase() == status.name
-        );
+        return selectedStatus.any((s) =>
+        idea.status.toLowerCase() == s.name.toLowerCase());
       }).toList();
     }
 
-    // 🎯 SCORE
     if (selectedScoreRange.value != null) {
       temp = temp.where((idea) {
         switch (selectedScoreRange.value!) {
-          case ScoreRange.low:
-            return idea.score <= 40;
-          case ScoreRange.mid:
-            return idea.score > 40 && idea.score <= 70;
-          case ScoreRange.high:
-            return idea.score > 70;
+          case ScoreRange.low:  return idea.score <= 40;
+          case ScoreRange.mid:  return idea.score > 40 && idea.score <= 70;
+          case ScoreRange.high: return idea.score > 70;
         }
       }).toList();
     }
 
-    // 🔽 SORT
     switch (selectedSort.value) {
       case SortType.highest:
         temp.sort((a, b) => b.score.compareTo(a.score));
@@ -140,17 +183,26 @@ class IdeaHistoryController extends GetxController {
         temp.sort((a, b) => a.score.compareTo(b.score));
         break;
       case SortType.recent:
-        temp = temp.reversed.toList();
-        break;
+        break; // already ordered by Firestore descending
     }
 
     filteredIdeas.assignAll(temp);
   }
 
-  // 🎛 CONTROLS
-  void setSort(SortType type) {
-    selectedSort.value = type;
+  // ─── SEARCH ──────────────────────────────────────────────
+  void searchIdeas(String query) {
+    searchQuery.value = query;
+    applyFilters();
   }
+
+  void resetSearch() {
+    isSearching.value = false;
+    searchQuery.value = '';
+    applyFilters();
+  }
+
+  // ─── FILTER CONTROLS ─────────────────────────────────────
+  void setSort(SortType type) => selectedSort.value = type;
 
   void toggleStatus(IdeaStatus status) {
     if (selectedStatus.contains(status)) {
@@ -161,51 +213,66 @@ class IdeaHistoryController extends GetxController {
   }
 
   void setScoreRange(ScoreRange range) {
-    if (selectedScoreRange.value == range) {
-      selectedScoreRange.value = null; // 🔥 toggle OFF
-    } else {
-      selectedScoreRange.value = range;
-    }
+    selectedScoreRange.value =
+    selectedScoreRange.value == range ? null : range;
   }
-  // 🔄 RESET (REAL RESET)
+
   void resetFilters() {
-    selectedSort.value = SortType.highest;
+    selectedSort.value = SortType.recent;
     selectedStatus.clear();
     selectedScoreRange.value = null;
     searchQuery.value = '';
-
-    filteredIdeas.assignAll(allIdeas);
-
-    Get.back(); // close sheet
+    applyFilters();
+    Get.back();
   }
 
-  // 🗑 DELETE
-  void deleteIdea(IdeaModel idea) {
-    allIdeas.remove(idea);
-    applyFilters(); // 🔥 keep filters consistent
+  // ─── DELETE ──────────────────────────────────────────────
+  // In IdeaHistoryController
+
+  Future<void> deleteIdea(IdeaModel idea) async {
+    // ✅ Optimistic update — remove from UI instantly
+    allIdeas.removeWhere((i) => i.id == idea.id);
+    applyFilters();
+
+    try {
+      await _repo.deleteIdea(idea.id);
+
+      // ✅ Refresh stats after deletion
+      await _loadStats();
+
+      Get.snackbar(
+        "Deleted",
+        "\"${idea.title}\" has been removed.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.15),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+        mainButton: TextButton(
+          onPressed: () {
+            // ⚠️ Undo is complex with Firestore batch —
+            // simplest approach: reload the page
+            _loadFirstPage();
+            _loadStats();
+            Get.closeCurrentSnackbar();
+          },
+          child: const Text("UNDO",
+              style: TextStyle(color: Color(0xFF06B6D4))),
+        ),
+      );
+    } catch (e) {
+      // ✅ Rollback — re-fetch if Firestore delete failed
+      Get.snackbar(
+        "Error",
+        "Failed to delete idea. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.15),
+        colorText: Colors.white,
+      );
+      await _loadFirstPage(); // restore list to actual Firestore state
+    }
   }
 
   void compareIdea(IdeaModel idea) {
     Get.snackbar("Compare", "Coming soon");
   }
-
-  void resetSearch() {
-    isSearching.value = false;
-    searchQuery.value = '';
-
-    applyFilters(); // 🔥 IMPORTANT: re-run full pipeline
-  }
-
-
-
-  // 📊 STATS
-  int get totalIdeas => filteredIdeas.length;
-
-  double get avgScore =>
-      filteredIdeas.isEmpty ? 0 :
-      filteredIdeas.map((e) => e.score).reduce((a, b) => a + b) / filteredIdeas.length;
-
-  int get bestScore =>
-      filteredIdeas.isEmpty ? 0 :
-      filteredIdeas.map((e) => e.score).reduce((a, b) => a > b ? a : b);
 }
