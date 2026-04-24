@@ -8,187 +8,167 @@ import 'package:startup_lense/modules/detailed_analysis/model/risk_matrix_model.
 import 'package:startup_lense/modules/detailed_analysis/model/structure_model.dart';
 
 class DetailedAnalysisController extends GetxController {
-  // 🔷 STATE
-  final selectedIndex = 0.obs;
-  bool _isTabAnimating = false;
-  // 🔥 TAB-BASED ANIMATION CONTROL
-  final activeTabIndex = 0.obs;
 
-  // 🔥 ANIMATION TRIGGER FLAG
+  // ─── STATE ───────────────────────────────────────────────────────────────
+  final selectedIndex          = 0.obs;
+  final isSaved                = false.obs;
+  final isLoading              = true.obs;
   final triggerMarketAnimation = false.obs;
+  bool _isTabAnimating         = false;
 
-  RxBool isSaved = false.obs;
-
-  void toggleSave() {
-    isSaved.value = !isSaved.value;
-  }
-
-  // 🔥 DUMMY DATA
+  // ─── OBSERVABLES ─────────────────────────────────────────────────────────
   final marketData = MarketModel(
-    title: "Demand vs Competition",
-    description:
-    "High demand density in the North-East quadrant remains underserved by current legacy players.",
-    sentiment: "Bullish Growth (+14.2%)",
-    tam: "\$1.42 Billion",
-    demand: 0.88,
-    competition: 0.32,
-    scalability: 0.94,
+    title: '', description: '', sentiment: '',
+    tam: '', demand: 0, competition: 0, scalability: 0,
   ).obs;
 
   final financialData = FinancialModel(
-    capex: 280000,
-    burnRate: "18.5k/mo",
-    roi: "22 Months",
-    confidence: 96.8,
+    capex: 0, burnRate: '', roi: '', confidence: 0,
   ).obs;
 
-  final riskMatrix = [
-    RiskMatrixModel(
-      impact: "HIGH IMPACT",
-      probability: "LOW PROBABILITY",
-      title: "Operational Failure",
-      icon: Icons.settings_suggest,
-      color: Colors.orange,
-    ),
-    RiskMatrixModel(
-      impact: "HIGH IMPACT",
-      probability: "HIGH PROBABILITY",
-      title: "Market Rejection",
-      icon: Icons.error_outline,
-      color: Colors.redAccent,
-    ),
-    RiskMatrixModel(
-      impact: "LOW IMPACT",
-      probability: "LOW PROBABILITY",
-      title: "Minor UX Friction",
-      icon: Icons.design_services,
-      color: Colors.green,
-    ),
-    RiskMatrixModel(
-      impact: "LOW IMPACT",
-      probability: "HIGH PROBABILITY",
-      title: "User Drop-off",
-      icon: Icons.trending_down,
-      color: AppColors.cyan,
-    ),
-  ].obs;
-
-
-
-  final strengths = [
-    "Strong problem clarity",
-    "Clear value proposition",
-    "Scalable idea",
-    "High user relevance",
-  ].obs;
-
-  final weaknesses = [
-    "Limited validation data",
-    "Dependency on user adoption",
-    "Initial cost uncertainty",
-    "Execution complexity",
-  ].obs;
-
-  final opportunities = [
-    "Growing market demand",
-    "Low direct competition",
-    "Expansion potential",
-    "Partnership possibilities",
-  ].obs;
-
-  final threats = [
-    "Market saturation risk",
-    "Competitor entry",
-    "User retention challenge",
-    "Economic instability",
-  ].obs;
-
-  final metricScore = 8.4.obs;
+  final riskMatrix    = <RiskMatrixModel>[].obs;
+  final strengths     = <String>[].obs;
+  final weaknesses    = <String>[].obs;
+  final opportunities = <String>[].obs;
+  final threats       = <String>[].obs;
+  final metricScore   = 0.0.obs;
+  final launchPhases  = <Map<String, dynamic>>[].obs;
 
   final coreAlignment = CoreAlignmentModel(
-    matchScore: 0.92,
-    description:
-    "The idea demonstrates a strong alignment between the identified problem and the proposed solution. "
-        "Users face clear inefficiencies, and the solution directly addresses those pain points with measurable improvements. "
-        "The value proposition is clearly defined and differentiates from existing alternatives. "
-        "Market need is validated with observable patterns. "
-        "Execution feasibility remains realistic based on current resources. "
-        "Overall, the idea shows high potential for adoption and scalability.",
+    matchScore: 0, description: '',
   ).obs;
 
-  // 🔷 CONTROLLERS
-  final tabController = ItemScrollController();
-  final sectionController = ItemScrollController();
+  // ─── CONTROLLERS ─────────────────────────────────────────────────────────
+  final tabController         = ItemScrollController();
+  final sectionController     = ItemScrollController();
   final itemPositionsListener = ItemPositionsListener.create();
+  final tabs                  = ["Structure", "Market", "Risk", "Strategy"];
 
-  // 🔷 TABS
-  final tabs = ["Structure", "Market", "Risk", "Strategy"];
-
+  // ─── LIFECYCLE ───────────────────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments as Map<String, dynamic>?;
-    if (args != null) loadRealData(args);   // ← add this line
     itemPositionsListener.itemPositions.addListener(_onScroll);
+
+    final args = Get.arguments;
+    if (args is Map<String, dynamic>) {
+      _mapFirestoreDoc(args);
+    }
+
+    isLoading.value = false;
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (tabController.isAttached) {
-        tabController.jumpTo(index: selectedIndex.value);
+        tabController.jumpTo(index: 0);
       }
     });
   }
 
-  void loadRealData(Map<String, dynamic> args) {
-    final market     = _safeMap(args['swot'] != null ? args : null, 'market');
-    final risk       = _safeMap(args, 'swot');
-    final strategy   = args;
-    final evaluation = args;
+  // ─── MAP FIRESTORE DOCUMENT → OBSERVABLES ────────────────────────────────
+  void _mapFirestoreDoc(Map<String, dynamic> doc) {
+    final aiResult   = _map(doc,      'aiResult');
+    final evaluation = _map(aiResult, 'evaluation');
+    final market     = _map(aiResult, 'market');
+    final risk       = _map(aiResult, 'risk');
+    final strategy   = _map(aiResult, 'strategy');
+    final swot       = _map(risk,     'swot');
 
-    // Market data
+    // ── Market ───────────────────────────────────────────────────────────────
+    final signals = _joinList(market['marketSignals']);
     marketData.value = MarketModel(
       title:       "Demand vs Competition",
-      description: args['marketSignals'] is List
-          ? (args['marketSignals'] as List).join(' · ')
-          : marketData.value.description,
-      sentiment:   args['marketSentiment']  ?? marketData.value.sentiment,
-      tam:         args['tam']              ?? marketData.value.tam,
-      demand:      _levelToDouble(args['demand']),
-      competition: _levelToDouble(args['competition']),
-      scalability: _levelToDouble(args['saturation'], invert: true),
+      description: signals.isNotEmpty
+          ? signals
+          : (market['marketInsight'] as String? ?? ''),
+      sentiment:   market['marketSentiment']  as String? ?? '',
+      tam:         market['tam']              as String? ?? '',
+      demand:      _levelToDouble(market['demandLevel']),
+      competition: _levelToDouble(market['competitionLevel']),
+      scalability: _levelToDouble(market['saturationLevel'], invert: true),
     );
 
-    // Financial data
+    // ── Financial ────────────────────────────────────────────────────────────
     financialData.value = FinancialModel(
-      capex:      (args['capex'] as num?)?.toDouble() ?? 280000,
-      burnRate:   args['burnRate']   ?? financialData.value.burnRate,
-      roi:        args['roiHorizon'] ?? financialData.value.roi,
-      confidence: ((args['coreAlignmentScore'] as num?)?.toDouble() ?? 0.92) * 100,
+      capex:      (strategy['capex'] as num?)?.toDouble() ?? 0,
+      burnRate:   strategy['burnRate']   as String? ?? '',
+      roi:        strategy['roiHorizon'] as String? ?? '',
+      confidence: ((evaluation['coreAlignmentScore'] as num?)?.toDouble() ?? 0) * 100,
     );
 
-    // SWOT
-    final swot = args['swot'] as Map<String, dynamic>? ?? {};
-    final s = swot['strengths']     as List?;
-    final w = swot['weaknesses']    as List?;
-    final o = swot['opportunities'] as List?;
-    final t = swot['threats']       as List?;
-    if (s != null && s.isNotEmpty) strengths.assignAll(List<String>.from(s));
-    if (w != null && w.isNotEmpty) weaknesses.assignAll(List<String>.from(w));
-    if (o != null && o.isNotEmpty) opportunities.assignAll(List<String>.from(o));
-    if (t != null && t.isNotEmpty) threats.assignAll(List<String>.from(t));
+    // ── SWOT ─────────────────────────────────────────────────────────────────
+    _assignList(strengths,     swot['strengths']);
+    _assignList(weaknesses,    swot['weaknesses']);
+    _assignList(opportunities, swot['opportunities']);
+    _assignList(threats,       swot['threats']);
 
-    // Core alignment
+    // ── Core Alignment ───────────────────────────────────────────────────────
     coreAlignment.value = CoreAlignmentModel(
-      matchScore:  (args['coreAlignmentScore'] as num?)?.toDouble() ?? 0.92,
-      description: args['coreAlignmentDesc'] ?? coreAlignment.value.description,
+      matchScore:  (evaluation['coreAlignmentScore'] as num?)?.toDouble() ?? 0,
+      description: evaluation['coreAlignmentDescription'] as String? ?? '',
     );
 
-    // Metric score
-    final ms = args['metricScore'];
+    // ── Metric Score ─────────────────────────────────────────────────────────
+    final ms = evaluation['metricScore'] ?? aiResult['metricScore'];
     if (ms != null) metricScore.value = (ms as num).toDouble();
+
+    // ── Risk Matrix ───────────────────────────────────────────────────────────
+    riskMatrix.assignAll(_buildRiskMatrix(risk));
+
+    // ── Launch Phases ─────────────────────────────────────────────────────────
+    final phases = strategy['launchPhases'];
+    if (phases is List) {
+      launchPhases.assignAll(
+        phases.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+      );
+    }
   }
 
-  Map<String, dynamic> _safeMap(Map<String, dynamic>? source, String key) {
-    if (source == null) return {};
-    final v = source[key];
+  // ─── BUILD RISK MATRIX ────────────────────────────────────────────────────
+  List<RiskMatrixModel> _buildRiskMatrix(Map<String, dynamic> risk) {
+    return [
+      RiskMatrixModel(
+        impact:      "FINANCIAL RISK",
+        probability: risk['financialRisk']        as String? ?? '',
+        title:       "Capital Deficiency",
+        icon:        Icons.account_balance_wallet_outlined,
+        color:       _riskColor(risk['financialRisk'] as String?),
+      ),
+      RiskMatrixModel(
+        impact:      "MARKET RISK",
+        probability: risk['marketRisk']            as String? ?? '',
+        title:       "Market Entry",
+        icon:        Icons.show_chart,
+        color:       _riskColor(risk['marketRisk'] as String?),
+      ),
+      RiskMatrixModel(
+        impact:      "TECHNICAL RISK",
+        probability: risk['technicalRisk']         as String? ?? '',
+        title:       "Tech Complexity",
+        icon:        Icons.developer_mode,
+        color:       _riskColor(risk['technicalRisk'] as String?),
+      ),
+      RiskMatrixModel(
+        impact:      "MARKET ENTRY",
+        probability: risk['marketEntryDifficulty'] as String? ?? '',
+        title:       "Entry Difficulty",
+        icon:        Icons.lock_outline,
+        color:       _riskColor(risk['marketEntryDifficulty'] as String?),
+      ),
+    ];
+  }
+
+  // ─── HELPERS ─────────────────────────────────────────────────────────────
+  Color _riskColor(String? level) {
+    switch ((level ?? '').toLowerCase()) {
+      case 'high':   return Colors.redAccent;
+      case 'medium': return Colors.orange;
+      case 'low':    return Colors.green;
+      default:       return AppColors.cyan;
+    }
+  }
+
+  Map<String, dynamic> _map(Map<String, dynamic> src, String key) {
+    final v = src[key];
     return v is Map ? Map<String, dynamic>.from(v) : {};
   }
 
@@ -203,34 +183,36 @@ class DetailedAnalysisController extends GetxController {
     return invert ? (1.0 - v) : v;
   }
 
-  // 🔷 SCROLL SYNC (SECTION → TAB)
+  String _joinList(dynamic list) {
+    if (list is List) return list.join(' · ');
+    return '';
+  }
+
+  void _assignList(RxList<String> target, dynamic source) {
+    if (source is List && source.isNotEmpty) {
+      target.assignAll(List<String>.from(source));
+    }
+  }
+
+  // ─── SAVE TOGGLE ─────────────────────────────────────────────────────────
+  void toggleSave() => isSaved.value = !isSaved.value;
+
+  // ─── SCROLL SYNC (SECTION → TAB) ─────────────────────────────────────────
   void _onScroll() {
     if (_isTabAnimating) return;
 
     final positions = itemPositionsListener.itemPositions.value;
-
     if (positions.isEmpty) return;
 
     final firstVisible = positions
-        .where((pos) => pos.itemTrailingEdge > 0)
-        .reduce((min, pos) =>
-    pos.itemLeadingEdge < min.itemLeadingEdge ? pos : min);
+        .where((p) => p.itemTrailingEdge > 0)
+        .reduce((a, b) => a.itemLeadingEdge < b.itemLeadingEdge ? a : b);
 
     final newIndex = firstVisible.index;
-
     if (selectedIndex.value != newIndex) {
       selectedIndex.value = newIndex;
+      _maybeFireMarketAnimation(newIndex);
 
-      // 🔥 ADD THIS BLOCK
-      if (newIndex == 1) { // 1 = Market tab
-        triggerMarketAnimation.value = false;
-
-        Future.delayed(const Duration(milliseconds: 120), () {
-          triggerMarketAnimation.value = true;
-        });
-      }
-
-      // 👇 existing tab sync
       if (tabController.isAttached) {
         tabController.scrollTo(
           index: newIndex,
@@ -241,10 +223,10 @@ class DetailedAnalysisController extends GetxController {
     }
   }
 
+  // ─── TAB TAP ─────────────────────────────────────────────────────────────
   Future<void> onTabTap(int index) async {
     selectedIndex.value = index;
-
-    _isTabAnimating = true;
+    _isTabAnimating     = true;
 
     if (sectionController.isAttached) {
       await sectionController.scrollTo(
@@ -255,22 +237,24 @@ class DetailedAnalysisController extends GetxController {
     }
 
     _isTabAnimating = false;
+    _maybeFireMarketAnimation(index);
+  }
 
-    // 🔥 ADD THIS BLOCK
+  // ─── MARKET ANIMATION TRIGGER ─────────────────────────────────────────────
+  void _maybeFireMarketAnimation(int index) {
     if (index == 1) {
       triggerMarketAnimation.value = false;
-
-      await Future.delayed(const Duration(milliseconds: 120));
-
-      triggerMarketAnimation.value = true;
+      Future.delayed(
+        const Duration(milliseconds: 120),
+            () => triggerMarketAnimation.value = true,
+      );
     }
   }
+
+  // ─── CLEANUP ─────────────────────────────────────────────────────────────
   @override
   void onClose() {
     itemPositionsListener.itemPositions.removeListener(_onScroll);
     super.onClose();
   }
-
-
-
 }

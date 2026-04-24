@@ -275,4 +275,46 @@ class IdeaHistoryController extends GetxController {
   void compareIdea(IdeaModel idea) {
     Get.snackbar("Compare", "Coming soon");
   }
+
+
+  void openIdea(IdeaModel idea) async {
+    if (idea.status == 'Processing') {
+      _showProcessingSnackbar();
+      return;
+    }
+
+    try {
+      final fullIdea = await _repo.getIdeaById(idea.id);
+      if (fullIdea == null) {
+        _showErrorSnackbar('Idea not found');
+        return;
+      }
+      Get.toNamed('/analysis', arguments: fullIdea);
+    } catch (e) {
+      _showErrorSnackbar('Failed to load idea details');
+    }
+  }
+
+  void _showProcessingSnackbar() {
+    Get.snackbar(
+      'Analysis In Progress',
+      'Your idea is still being analyzed. Please check back shortly.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.orange.withOpacity(0.15),
+      colorText: Colors.white,
+      icon: const Icon(Icons.hourglass_top_rounded, color: Colors.orange),
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    Get.snackbar(
+      'Error',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red.withOpacity(0.15),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 3),
+    );
+  }
 }

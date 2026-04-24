@@ -5,6 +5,17 @@ import '../../core/services/idea_services.dart';
 class IdeaRepository {
   final IdeaService _ideaService = IdeaService();
 
+
+  Future<Map<String, dynamic>?> getIdeaById(String ideaId) async {
+    try {
+      final doc = await _ideaService.getIdeaById(ideaId);
+      if (!doc.exists) return null;
+      return {'id': doc.id, ...doc.data()!};
+    } catch (e) {
+      throw "Failed to fetch idea details";
+    }
+  }
+
   // In IdeaRepository
 
   Future<void> deleteIdea(String ideaId) async {

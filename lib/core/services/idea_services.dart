@@ -5,6 +5,16 @@ class IdeaService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> getIdeaById(String ideaId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) throw "User not authenticated";
+
+    return await _firestore
+        .collection('ideas')
+        .doc(ideaId)
+        .get();
+  }
   // In IdeaService
 
   Future<void> deleteIdea(String ideaId) async {

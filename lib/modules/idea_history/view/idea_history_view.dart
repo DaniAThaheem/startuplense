@@ -304,7 +304,7 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
         if (isSelecting) {
           Get.back(result: idea);
         } else {
-          Get.toNamed('/idea-result', arguments: idea);
+          controller.openIdea(idea);  // ← was: Get.toNamed('/idea-result', arguments: idea)
         }
       },
       child: Container(
