@@ -11,6 +11,7 @@ class AppRoutes {
   static const RESULT = '/result';
   static const ANALYSIS = '/analysis';
   static const INITIALROUTE = '/splash';
+  static const COMPARE = '/compare';
 
 
 }

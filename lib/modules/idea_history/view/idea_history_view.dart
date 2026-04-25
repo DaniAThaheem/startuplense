@@ -205,7 +205,8 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
   // ─── IDEAS LIST ──────────────────────────────────────────
   Widget _ideasList() {
     return Obx(() {
-      // ── Initial load skeleton ──
+
+      // ── Initial load skeleton ──────────────────────────────
       if (controller.isLoading.value) {
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -213,80 +214,100 @@ class IdeaHistoryView extends GetView<IdeaHistoryController> {
         );
       }
 
-      // ── Empty state ──
+      // ── Empty state ───────────────────────────────────────
       if (controller.filteredIdeas.isEmpty) {
-        return _emptyState();
+        return RefreshIndicator(
+          onRefresh: controller.refresh,
+          color: const Color(0xFF06B6D4),
+          backgroundColor: const Color(0xFF111827),
+          child: ListView(
+            // ListView needed so RefreshIndicator works on empty state
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              SizedBox(
+                height: 400,
+                child: _emptyState(),
+              ),
+            ],
+          ),
+        );
       }
 
-      // ── Populated list with pagination ──
-      return NotificationListener<ScrollNotification>(
-        onNotification: (scroll) {
-          if (scroll.metrics.pixels >=
-              scroll.metrics.maxScrollExtent - 200) {
-            controller.loadMore();
-          }
-          return false;
-        },
-        child: ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: controller.filteredIdeas.length + 1, // +1 for footer
-          itemBuilder: (_, i) {
-            // ── Pagination footer ──
-            if (i == controller.filteredIdeas.length) {
-              return Obx(() {
-                if (controller.isLoadingMore.value) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF06B6D4),
+      // ── Populated list ────────────────────────────────────
+      return RefreshIndicator(
+        onRefresh: controller.refresh,
+        color: const Color(0xFF06B6D4),
+        backgroundColor: const Color(0xFF111827),
+        displacement: 60,
+        strokeWidth: 2.5,
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (scroll) {
+            if (scroll.metrics.pixels >=
+                scroll.metrics.maxScrollExtent - 200) {
+              controller.loadMore();
+            }
+            return false;
+          },
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: controller.filteredIdeas.length + 1,
+            itemBuilder: (_, i) {
+
+              // ── Pagination footer ──────────────────────────
+              if (i == controller.filteredIdeas.length) {
+                return Obx(() {
+                  if (controller.isLoadingMore.value) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF06B6D4),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }
-                if (!controller.hasMore.value) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Center(
-                      child: Text(
-                        "— All ideas loaded —",
-                        style: TextStyle(
-                            color: Colors.white24, fontSize: 12),
+                    );
+                  }
+                  if (!controller.hasMore.value) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: Text(
+                          "— All ideas loaded —",
+                          style: TextStyle(color: Colors.white24, fontSize: 12),
+                        ),
                       ),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              });
-            }
+                    );
+                  }
+                  return const SizedBox.shrink();
+                });
+              }
 
-            final idea = controller.filteredIdeas[i];
-            return Dismissible(
-              key: Key(idea.id),
-              direction: DismissDirection.horizontal,
-              background: _swipeRightBg(),
-              secondaryBackground: _swipeLeftBg(),
-              confirmDismiss: (direction) async {
-                if (direction == DismissDirection.endToStart) {
-                  return await _confirmDelete();
-                }
-                // swipe right = compare, don't dismiss the tile
-                controller.compareIdea(idea);
-                return false;
-              },
-              // In _ideasList(), inside Dismissible:
-
-              onDismissed: (direction) async {
-                await controller.deleteIdea(idea);  // ✅ was missing await
-              },
-              child: _ideaCard(idea),
-            );
-          },
+              final idea = controller.filteredIdeas[i];
+              return Dismissible(
+                key: Key(idea.id),
+                direction: DismissDirection.horizontal,
+                background: _swipeRightBg(),
+                secondaryBackground: _swipeLeftBg(),
+                confirmDismiss: (direction) async {
+                  if (direction == DismissDirection.endToStart) {
+                    return await _confirmDelete();
+                  }
+                  controller.compareIdea(idea);
+                  return false;
+                },
+                onDismissed: (direction) async {
+                  await controller.deleteIdea(idea);
+                },
+                child: _ideaCard(idea),
+              );
+            },
+          ),
         ),
       );
     });

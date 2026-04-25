@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:startup_lense/modules/idea_history/controller/Idea_history_controller.dart';
 import 'package:startup_lense/modules/main/controller/main_controller.dart';
 import 'package:startup_lense/routes/app_routes.dart';
 import '../controller/dashboard_controller.dart';
@@ -531,12 +532,6 @@ class DashboardView extends GetView<DashboardController> {
                   Get.toNamed('/improve-idea', arguments: idea);
                 },
               ),
-              ListTile(
-                title: const Text("Compare",
-                    style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context),
-              ),
-              // In _showIdeaOptions() — replace the Delete ListTile:
 
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),

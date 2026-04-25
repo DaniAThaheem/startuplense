@@ -272,6 +272,13 @@ class IdeaHistoryController extends GetxController {
     }
   }
 
+  Future<void> refresh() async {
+    await Future.wait([
+      _loadFirstPage(),
+      _loadStats(),
+    ]);
+  }
+
   void compareIdea(IdeaModel idea) {
     Get.snackbar("Compare", "Coming soon");
   }

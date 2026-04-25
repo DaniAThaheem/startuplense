@@ -33,6 +33,16 @@ class CompareController extends GetxController {
     'Finalizing comparison report...',
   ];
 
+  // ✅ ADD this to CompareController
+  @override
+  void onInit() {
+    super.onInit();
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null && args['ideaA'] is IdeaModel) {
+      selectIdeaA(args['ideaA'] as IdeaModel);
+    }
+  }
+
   // ─── Selection ────────────────────────────────────────────
   void selectIdeaA(IdeaModel idea) {
     ideaA.value = idea;

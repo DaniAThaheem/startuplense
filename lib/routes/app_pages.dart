@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:startup_lense/modules/auth/binding/auth_binding.dart';
 import 'package:startup_lense/modules/auth/view/splash_view.dart';
+import 'package:startup_lense/modules/compare/controller/compare_controller.dart';
+import 'package:startup_lense/modules/compare/view/compare_view.dart';
 import 'package:startup_lense/modules/detailed_analysis/binding/detailed_analysis_binding.dart';
 import 'package:startup_lense/modules/detailed_analysis/controller/detailed_analysis_controller.dart';
 import 'package:startup_lense/modules/detailed_analysis/view/detailed_analysis_view.dart';
@@ -115,6 +117,17 @@ class AppPages {
       name: '/splash',
       page: () => const SplashView(),
       binding: AuthBinding(),
+    ),
+
+
+    GetPage(
+      name: AppRoutes.COMPARE,
+      page: () => CompareView(),
+      transition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 400),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<CompareController>(() => CompareController());
+      }),
     ),
 
   ];
